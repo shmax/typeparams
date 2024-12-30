@@ -10,7 +10,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "query-string": "^9.1.1"
+    "query-string": "^9.1.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
