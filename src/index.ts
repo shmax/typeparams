@@ -1,1 +1,1 @@
-console.log('Happy developing ✨')
+export * from "./url-structured-search-params";
