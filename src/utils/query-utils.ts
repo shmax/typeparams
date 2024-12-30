@@ -1,22 +1,26 @@
-export function decodeUnderscores(queryString: string): Record<string, unknown> {
+export function deserialize(queryString: string): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
-    // Remove the leading '?' if it exists and parse the query string
     const query = queryString.startsWith("?")
         ? queryString.slice(1)
         : queryString;
-    const params = new URLSearchParams(query);
+    const params = query.split("&");
 
-    for (const [key, value] of params.entries()) {
-        const keys = key.split("_"); // Split keys by underscores
+    for (const param of params) {
+        const [rawKey, rawValue] = param.split("=");
+        const key = decodeURIComponent(rawKey); // Decode the key
+        const value = decodeURIComponent(rawValue); // Decode the value
+
+        const keys = key.split("_");
         let current: Record<string, unknown> = result;
 
         keys.forEach((k, index) => {
             if (index === keys.length - 1) {
-                current[k] = value; // Assign value at the deepest level
+                // Handle pipe-delimited arrays
+                current[k] = value.includes("|") ? value.split("|") : value;
             } else {
                 if (typeof current[k] !== "object" || current[k] === null) {
-                    current[k] = {}; // Ensure the intermediate object exists
+                    current[k] = {};
                 }
                 current = current[k] as Record<string, unknown>;
             }
@@ -26,23 +30,29 @@ export function decodeUnderscores(queryString: string): Record<string, unknown> 
     return result;
 }
 
-export function param(obj: Record<string, unknown>): string {
-    const params = new URLSearchParams();
+export function serialize(obj: Record<string, unknown>): string {
+    const parts: string[] = [];
 
     const flatten = (nested: Record<string, unknown>, prefix = ""): void => {
         for (const [key, value] of Object.entries(nested)) {
             const newKey = prefix ? `${prefix}_${key}` : key;
 
-            if (value && typeof value === "object" && !Array.isArray(value)) {
-                // Recurse for nested objects
+            if (Array.isArray(value)) {
+                // Join array values with a pipe and encode the result
+                parts.push(`${encodeURIComponent(newKey)}=${encodeURIComponent(value.join("|"))}`);
+            } else if (value && typeof value === "object") {
                 flatten(value as Record<string, unknown>, newKey);
             } else {
-                // Add key-value pair to params
-                params.append(newKey, String(value));
+                // Encode both key and value
+                parts.push(`${encodeURIComponent(newKey)}=${encodeURIComponent(String(value))}`);
             }
         }
     };
 
     flatten(obj);
-    return `?${params.toString()}`;
+    return `?${parts.join("&")}`;
 }
+
+
+
+

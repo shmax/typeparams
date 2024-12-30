@@ -1,5 +1,5 @@
 import { parse } from "query-string";
-import { decodeUnderscores, param } from "./utils/query-utils";
+import { deserialize, serialize } from "./utils/query-utils";
 
 type NestedKeyOf<ObjectType extends object> = {
   [Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
@@ -22,7 +22,7 @@ class UrlStructuredSearchParams<T extends object> {
 
   constructor(searchString: string) {
     const parsed = parse(searchString);
-    this.params = decodeUnderscores(parsed) as T;
+    this.params = deserialize(parsed) as T;
   }
 
   // Overloads for `set`
@@ -89,7 +89,7 @@ class UrlStructuredSearchParams<T extends object> {
   }
 
   toString(): string {
-    return param(this.params);
+    return serialize(this.params);
   }
 
   all(): T {
