@@ -40,7 +40,7 @@ describe("serialize", () => {
                 tags: ["Walmart", "Dollar Store"],
             },
         };
-        const expected = "?filters_tags=Walmart%7CDollar%20Store"; // Proper encoding
+        const expected = "filters_tags=Walmart%7CDollar%20Store"; // Proper encoding
         expect(serialize(input)).toBe(expected);
     });
 
@@ -50,7 +50,7 @@ describe("serialize", () => {
                 toyline: "355",
             },
         };
-        const expected = "?filters_toyline=355"; // No special characters, so no additional encoding
+        const expected = "filters_toyline=355"; // No special characters, so no additional encoding
         expect(serialize(input)).toBe(expected);
     });
 
@@ -61,7 +61,7 @@ describe("serialize", () => {
                 toyline: "355",
             },
         };
-        const expected = "?filters_tags=Walmart%7CDollar%20Store&filters_toyline=355"; // Proper encoding
+        const expected = "filters_tags=Walmart%7CDollar%20Store&filters_toyline=355"; // Proper encoding
         expect(serialize(input)).toBe(expected);
     });
 });

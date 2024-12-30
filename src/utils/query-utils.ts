@@ -50,7 +50,7 @@ export function serialize(obj: Record<string, unknown>): string {
     };
 
     flatten(obj);
-    return `?${parts.join("&")}`;
+    return parts.join("&");
 }
 
 
