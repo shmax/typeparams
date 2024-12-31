@@ -7,7 +7,8 @@
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "outDir": "./bin"
   },
   "include": ["src/**/*"]
 }
