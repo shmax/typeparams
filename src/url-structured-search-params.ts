@@ -1,4 +1,3 @@
-import { parse } from "query-string";
 import { deserialize, serialize } from "./utils/query-utils";
 
 type NestedKeyOf<ObjectType extends object> = {
@@ -17,12 +16,11 @@ type PathValue<Obj, Path extends string> = Path extends `${infer Key}.${infer Re
     ? Obj[Path]
     : never;
 
-class UrlStructuredSearchParams<T extends object> {
+class UrlStructuredSearchParams<T extends Record<string, unknown>> {
   private params: T;
 
   constructor(searchString: string) {
-    const parsed = parse(searchString);
-    this.params = deserialize(parsed) as T;
+    this.params = deserialize(searchString) as T;
   }
 
   // Overloads for `set`
@@ -33,14 +31,12 @@ class UrlStructuredSearchParams<T extends object> {
     if (typeof pathOrObject === "string") {
       // Handle nested key updates
       const keys = pathOrObject.split(".") as string[];
-      let current = this.params;
+      let current = this.params as Record<string, unknown>;
 
       for (let i = 0; i < keys.length - 1; i++) {
         const key = keys[i];
-        if (current[key] === undefined) {
-          current[key] = {};
-        }
-        current = current[key];
+        current[key] ??= {};
+        current = current[key] as Record<string, unknown>;
       }
 
       const finalKey = keys[keys.length - 1];
@@ -57,13 +53,13 @@ class UrlStructuredSearchParams<T extends object> {
 
   get<K extends NestedKeyOf<T>>(path: K): PathValue<T, K> | undefined {
     const keys = path.split(".") as string[];
-    let current = this.params;
+    let current = this.params as Record<string, unknown>;
 
     for (const key of keys) {
       if (current[key] === undefined) {
         return undefined;
       }
-      current = current[key];
+      current = current[key] as Record<string, unknown>;;
     }
 
     return current as PathValue<T, K>;
@@ -72,7 +68,7 @@ class UrlStructuredSearchParams<T extends object> {
   clear<K extends NestedKeyOf<T>>(path: K): void {
     // We will explicitly handle the deletion case here to avoid type issues.
     const keys = path.split(".") as string[];
-    let current = this.params;
+    let current = this.params as Record<string, unknown>;
 
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
@@ -80,7 +76,7 @@ class UrlStructuredSearchParams<T extends object> {
         // No need to proceed if the path doesn't exist
         return;
       }
-      current = current[key];
+      current = current[key] as Record<string, unknown>;;
     }
 
     // Delete the final key
