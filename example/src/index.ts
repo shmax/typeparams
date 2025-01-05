@@ -1,4 +1,4 @@
-import { UrlStructuredSearchParams } from '../../src/url-structured-search-params';
+import { TypeParams } from '../../src/type-params';
 
 // Define the type for filters
 type Filters = {
@@ -8,8 +8,8 @@ type Filters = {
     };
 };
 
-// Create an instance of UrlStructuredSearchParams with a query string
-const params = new UrlStructuredSearchParams<Filters>("?filters_toyline=3&filters_tags=foo|bar");
+// Create an instance of TypeParams with a query string
+const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar");
 // Accessing individual parameters
 const toyline = params.get("filters.toyline");
 
@@ -32,7 +32,7 @@ function createOutput() {
     `;
 
     app.innerHTML = `
-        <h1>UrlStructuredSearchParams Demo</h1>
+        <h1>TypeParams Demo</h1>
         ${section("Initial Parsed Parameters", JSON.stringify({
         toyline,
     }, null, 2))}

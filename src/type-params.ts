@@ -18,7 +18,7 @@ type PathValue<Obj, Path extends string> = Path extends `${infer Key}.${infer Re
     ? Obj[Path]
     : never;
 
-export class UrlStructuredSearchParams<T extends object> {
+export class TypeParams<T extends object> {
   private params: T;
 
   constructor(

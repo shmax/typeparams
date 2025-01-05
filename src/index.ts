@@ -1,1 +1,1 @@
-export * from "./url-structured-search-params";
+export * from "./type-params";

@@ -188,7 +188,7 @@ export default async function typeparamsPlugin() {
 
                 if (
                     t.isIdentifier(callee) &&
-                    callee.name === "UrlStructuredSearchParams" &&
+                    callee.name === "TypeParams" &&
                     path.node.typeParameters
                 ) {
                     const checker = state.typeChecker!;

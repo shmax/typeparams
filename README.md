@@ -62,12 +62,12 @@ type Filters = {
 };
 ```
 
-### 3. Use the `UrlStructuredSearchParams` Class
+### 3. Use the `TypeParams` Class
 
 ```ts
-import { UrlStructuredSearchParams } from "typeparams-plugin/shared/url-structured-search-params";
+import { TypeParams } from "typeparams-plugin/shared/url-structured-search-params";
 
-const params = new UrlStructuredSearchParams<Filters>("?filters_toyline=3&filters_tags=toy1,toy2");
+const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=toy1,toy2");
 
 // Get a value by its key path
 const toyline = params.get("filters.toyline");
