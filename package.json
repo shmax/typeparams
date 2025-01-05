@@ -12,10 +12,9 @@
     "./plugin": "./dist/plugin/index.js"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test": "jest",
     "lint": "eslint src",
-    "build": "tsc",
-    "prepare": "tsc"
+    "build": "tsc"
   },
   "dependencies": {
     "@babel/core": "^7.26.0",
