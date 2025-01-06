@@ -32,12 +32,6 @@ export default {
 };
 ```
 
----
-
-## Usage
-
-### 1. Setup Babel
-
 Add the plugin to your Babel configuration (e.g., `.babelrc` or Babel section in `package.json`):
 
 ```json
@@ -46,6 +40,11 @@ Add the plugin to your Babel configuration (e.g., `.babelrc` or Babel section in
   "plugins": ["@shmax/typeparams/plugin"]
 }
 ```
+
+---
+
+## Usage
+
 
 ### 2. Define Your Url schema as a TypeScript interface
 
