@@ -1,11 +1,12 @@
 
 # TypeParams Plugin
 
-TypeParams Plugin is a powerful Babel plugin designed to validate and serialize URL query strings based on TypeScript type definitions. It automatically generates validation schemas during build time, allowing for seamless runtime validation with minimal setup.
+TypeParams Plugin is a TypeScript-first replacement for UrlSearchParams that allows you to apply type discipline to your query parameters such that reads and writes are safely protected. Furthermore, thanks to a Babel plugin, it will even coerce values for you automatically (ie, no need for `parseInt`).
 
 ## Features
 
 - Automatically generates validation schemas based on TypeScript types.
+- Automatic type coercion (eg. string "3" -> integer 3)
 - Lightweight integration with minimal configuration.
 - Works seamlessly with URL query strings.
 
@@ -27,7 +28,6 @@ Create a `typeparams.config.ts` file in the root of your project:
 
 ```ts
 export default {
-  files: ["src/**/*.ts"], // Glob pattern for files to include
   outputDir: ".generated-schemas", // Directory for generated schema files
 };
 ```
@@ -62,27 +62,42 @@ type Filters = {
 };
 ```
 
-### 3. Use the `TypeParams` Class
+### 3. Feed it to an instance of the `TypeParams` Class as a generic argument
 
 ```ts
 import { TypeParams } from "typeparams-plugin/shared/url-structured-search-params";
 
 const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=toy1,toy2");
 
-// Get a value by its key path
-const toyline = params.get("filters.toyline");
+// Safely get a value by its key path
+const toyline = params.get("filters.toyline"); // OK
+const brand = params.get("filters.brand"); // TS error! property "brand" doesn't exist on "filters"' 
+
+```
+### 4. Any values you retrieve are automatically coerced into the expected type
+
+```ts
 console.log(typeof toyline, toyline); // number 3
-
-// Set a value
-params.set("filters.metadata.active", true);
-
-// Clear a key
-params.clear("filters.tags");
-
-// Serialize back to a string
-console.log(params.toString());
 ```
 
+### 5. Set values with the same type discipline
+```ts
+// Set a value safely
+params.set("filters.toyline", 3); // OK
+params.set("filters.toyline", "3"); // TS error! Property "toyline" expects a number
+params.set("filters.whammy", true); // TS error! Property "whammy" doesn't exist
+```
+
+### 6. Can also clear values
+```ts
+// Clear a key
+params.clear("filters.tags");
+```
+
+// Serialize back to a string
+```ts
+console.log(params.toString()); // filters_toyline=3&filters_tags=toy1,toy2
+```
 ---
 
 ## Example Output
@@ -101,7 +116,7 @@ When running your project, the plugin generates schema files in `.generated-sche
 ## FAQ
 
 **Q: Do I need to configure anything else?**  
-A: Nope! Just add the plugin to your Babel setup and define your types. The plugin handles the rest.
+A: Nope! Just add the plugin to your Babel setup and define your types. The plugin handles the rest. Oh, and you may want to add the name of the generated schema directory to your .gitignore
 
 **Q: Does this work with non-TypeScript projects?**  
 A: No, this plugin is designed specifically for TypeScript-first projects.
