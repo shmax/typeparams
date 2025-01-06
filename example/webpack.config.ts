@@ -1,7 +1,8 @@
 import { Configuration } from "webpack";
 import path from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
-import "webpack-dev-server"; // For types
+import "webpack-dev-server";
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 
 const config: Configuration = {
     mode: "development",
@@ -43,6 +44,12 @@ const config: Configuration = {
     plugins: [
         new HtmlWebpackPlugin({
             template: "index.html", // Use an HTML template
+        }),
+        new ForkTsCheckerWebpackPlugin({
+            async: false, // Errors appear immediately in terminal
+            typescript: {
+                configFile: 'tsconfig.json', // Adjust path if needed
+            },
         }),
     ],
 };

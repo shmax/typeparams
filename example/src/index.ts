@@ -13,7 +13,6 @@ const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar"
 // Accessing individual parameters
 const toyline = params.get("filters.toyline");
 
-// Modify parameters dynamically with a string path
 params.set("filters.toyline", 5);
 
 // or with an object (note that this is equivalent to the line above in that will deep merge atop existing values by default, but you can pass false
