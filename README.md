@@ -46,7 +46,7 @@ Add the plugin to your Babel configuration (e.g., `.babelrc` or Babel section in
 ## Usage
 
 
-### 2. Define Your Url schema as a TypeScript interface
+### 1. Define Your Url schema as a TypeScript interface
 
 ```ts
 type Filters = {
@@ -61,7 +61,7 @@ type Filters = {
 };
 ```
 
-### 3. Feed it to an instance of the `TypeParams` Class as a generic argument
+### 2. Feed it to an instance of the `TypeParams` Class as a generic argument
 
 ```ts
 import { TypeParams } from "typeparams-plugin/shared/url-structured-search-params";
@@ -73,13 +73,13 @@ const toyline = params.get("filters.toyline"); // OK
 const brand = params.get("filters.brand"); // TS error! property "brand" doesn't exist on "filters"' 
 
 ```
-### 4. Any values you retrieve are automatically coerced into the expected type
+### 3. Any values you retrieve are automatically coerced into the expected type
 
 ```ts
 console.log(typeof toyline, toyline); // number 3
 ```
 
-### 5. Set values with the same type discipline
+### 4. Set values with the same type discipline
 ```ts
 // Set a value safely
 params.set("filters.toyline", 3); // OK
@@ -87,7 +87,7 @@ params.set("filters.toyline", "3"); // TS error! Property "toyline" expects a nu
 params.set("filters.whammy", true); // TS error! Property "whammy" doesn't exist
 ```
 
-### 6. Can also clear values
+### 5. Can also clear values
 ```ts
 // Clear a key
 params.clear("filters.tags");
@@ -95,7 +95,7 @@ params.clear("filters.tags");
 
 // Serialize back to a string
 ```ts
-console.log(params.toString()); // filters_toyline=3&filters_tags=toy1,toy2
+navigate(`?${params}`) // ?filters_toyline=3&filters_tags=toy1,toy2
 ```
 ---
 
