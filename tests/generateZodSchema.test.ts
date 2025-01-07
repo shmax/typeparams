@@ -1,5 +1,5 @@
 import * as ts from "typescript";
-import { generateZodSchema } from "../src/plugin";
+import { generateZodSchema } from "../src/schema-generator";
 
 import * as fs from "fs";
 import * as path from "path";

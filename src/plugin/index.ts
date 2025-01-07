@@ -1,12 +1,12 @@
 import * as t from "@babel/types";
 import path from "path";
-import fs from "fs";
 import { NodePath } from "@babel/core";
+import { ZodSchema} from "zod";
 
 // Define the shape of the schemas object
 type SchemasType = {
     [filePath: string]: {
-        [positionKey: string]: any; // Zod schema objects
+        [positionKey: string]: ZodSchema<unknown>;
     };
 };
 
@@ -43,10 +43,11 @@ export default function typeparamsBabelPlugin() {
 
     let schemas: SchemasType = {};
 
-    function loadSchemas() {
+    async function loadSchemas() {
         delete require.cache[require.resolve(SCHEMAS_FILE)];
         try {
-            schemas = require(SCHEMAS_FILE).schemas;
+            const loadedSchemas = await import(SCHEMAS_FILE);
+            schemas = loadedSchemas.schemas;
         } catch (err) {
             console.error(
                 `Failed to load schemas from ${SCHEMAS_FILE}. Ensure the schema generator has run.`,
@@ -57,7 +58,7 @@ export default function typeparamsBabelPlugin() {
     }
 
     return {
-        pre() {
+        async pre() {
             loadSchemas();
         },
 
@@ -81,7 +82,11 @@ export default function typeparamsBabelPlugin() {
 
                     if (schema) {
                         const schemaReference = t.memberExpression(
-                            t.identifier("schemas"),
+                            t.memberExpression(
+                                t.identifier("schemas"),
+                                t.stringLiteral(filePath),
+                                true
+                            ),
                             t.stringLiteral(positionKey),
                             true
                         );

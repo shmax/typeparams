@@ -14,7 +14,7 @@ const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar&
 // Accessing individual parameters
 const toyline = params.get("filters.toyline");
 
-console.log("toyline", params.get("filters.toyline"));
+console.log("toyline", typeof toyline, toyline);
 console.log("foo2", params.get("filters.foo2"));
 params.set("filters.toyline", 1257);
 

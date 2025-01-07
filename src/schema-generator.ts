@@ -81,14 +81,21 @@ function analyzeFile(filePath: string, program: ts.Program): Record<string, stri
 }
 
 // Generate Zod schemas for TypeScript types
-function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): string {
-    if (type.isStringLiteral()) return `z.literal('${type.value}')`;
+export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): string {
+    if (type.isStringLiteral()) return `z.literal("${type.value}")`;
     if (type.flags & ts.TypeFlags.String) return "z.string()";
-    if (type.flags & ts.TypeFlags.Number) return "z.number()";
+    if (type.flags & ts.TypeFlags.Number) return "z.coerce.number()";
     if (type.flags & ts.TypeFlags.Boolean) return "z.boolean()";
+    if (type.flags & ts.TypeFlags.Any) return "z.any()";
+    if (type.flags & ts.TypeFlags.Null) return "z.null()";
+    if (type.flags & ts.TypeFlags.Undefined) return "z.undefined()";
 
     if (type.isUnion()) {
-        return `z.union([${type.types.map(t => generateZodSchema(t, checker)).join(", ")}])`;
+        return `z.union([${type.types.map((t) => generateZodSchema(t, checker)).join(", ")}])`;
+    }
+
+    if (type.isIntersection()) {
+        return `z.intersection([${type.types.map((t) => generateZodSchema(t, checker)).join(", ")}])`;
     }
 
     if (checker.isArrayType(type)) {
@@ -99,15 +106,19 @@ function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): string {
     const symbol = type.getSymbol();
     if (symbol) {
         const properties = checker.getPropertiesOfType(type);
-        const zodProps = properties.map(prop => {
-            const propType = checker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
-            const isOptional = prop.flags & ts.SymbolFlags.Optional;
-            return `${prop.getName()}: ${isOptional ? `${generateZodSchema(propType, checker)}.optional()` : generateZodSchema(propType, checker)}`;
-        });
-        return `z.object({ ${zodProps.join(", ")} })`;
+        if (properties.length > 0) {
+            const zodProps = properties
+                .map((prop) => {
+                    const propType = checker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+                    const isOptional = prop.flags & ts.SymbolFlags.Optional;
+                    return `${prop.getName()}: ${isOptional ? `${generateZodSchema(propType, checker)}.optional()` : generateZodSchema(propType, checker)}`;
+                })
+                .join(", ");
+            return `z.object({ ${zodProps} })`;
+        }
     }
 
-    return "z.any()";
+    return "z.any()"; // Fallback for unsupported or unknown types
 }
 
 // Main logic for schema generation
