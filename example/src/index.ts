@@ -5,15 +5,18 @@ type Filters = {
     filters: {
         toyline: number;
         tags?: Array<string>;
+        foo2?: number;
     };
 };
 
 // Create an instance of TypeParams with a query string
-const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar");
+const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar&filters_foo2=3");
 // Accessing individual parameters
 const toyline = params.get("filters.toyline");
 
-params.set("filters.toyline", 5);
+console.log("toyline", params.get("filters.toyline"));
+console.log("foo2", params.get("filters.foo2"));
+params.set("filters.toyline", 1257);
 
 // or with an object (note that this is equivalent to the line above in that will deep merge atop existing values by default, but you can pass false
 // to the second param if you want to wipe existing data)
@@ -22,6 +25,7 @@ params.set({filters: {toyline: 6}});
 // Create HTML output
 function createOutput() {
     const app = document.getElementById('app') || document.body;
+
 
     const section = (title: string, content: string) => `
         <section>

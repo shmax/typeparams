@@ -24,11 +24,11 @@ yarn add @shmax/typeparams
 
 ## Configuration
 
-Create a `typeparams.config.ts` file in the root of your project:
+Create an (optional) `typeparams.config.ts` file in the root of your project:
 
 ```ts
 export default {
-  outputDir: ".generated-schemas", // Directory for generated schema files
+  outputDir: ".generated-schemas", // defaults to .generated-schemas
 };
 ```
 
@@ -39,6 +39,11 @@ Add the plugin to your Babel configuration (e.g., `.babelrc` or Babel section in
   "presets": ["@babel/preset-env", "@babel/preset-typescript"],
   "plugins": ["@shmax/typeparams/plugin"]
 }
+```
+
+Run the tool to generate schemas (add --watch to have it automatically re-generate schemas after changes):
+```sh
+typeparams-gen --watch
 ```
 
 ---
@@ -67,6 +72,9 @@ type Filters = {
 import { TypeParams } from "typeparams-plugin/shared/url-structured-search-params";
 
 const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=toy1,toy2");
+
+// or, for more safety:
+const params = new TypeParams<Filters>({filters: { toyline: 3, tags: ['toy1', 'toy2']}});
 
 // Safely get a value by its key path
 const toyline = params.get("filters.toyline"); // OK

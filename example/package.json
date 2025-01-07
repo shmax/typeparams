@@ -23,6 +23,8 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "build": "yarn type-check && webpack --config webpack.config.ts",
+    "generate-schemas": "node ../dist/schema-generator.js",
+    "generate-schemas-watch": "node ../dist/schema-generator.js --watch",
     "start": "webpack serve --config webpack.config.ts"
   }
 }
