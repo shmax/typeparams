@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import * as ts from "typescript";
 import chokidar from "chokidar";
 import path from "path";
