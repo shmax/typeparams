@@ -1,6 +1,6 @@
 import * as t from "@babel/types";
 import path from "path";
-import { NodePath } from "@babel/core";
+import { type NodePath } from "@babel/core";
 import { ZodSchema} from "zod";
 
 // Define the shape of the schemas object
