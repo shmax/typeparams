@@ -98,13 +98,13 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): strin
 
     // Handle Intersection types
     if (type.isIntersection()) {
-        const schemas = type.types.map((t) => generateZodSchema(t, checker));
-        // Wrap the entire intersection in `.optional()` if any type is optional
-        const isOptional = type.types.some(
-            (t) => t.flags & ts.TypeFlags.Undefined || t.flags & ts.TypeFlags.Null
-        );
-        const intersection = schemas.reduce((acc, schema) => `z.intersection(${acc}, ${schema})`);
-        return isOptional ? `${intersection}.optional()` : intersection;
+        const objectSchemas = type.types.map((t) => generateZodSchema(t, checker));
+        // Use `.merge()` for merging objects, if all components are objects
+        const mergedSchemas = objectSchemas.reduce((acc, schema) => {
+            if (acc) return `${acc}.merge(${schema})`;
+            return schema;
+        });
+        return mergedSchemas;
     }
 
     // Handle Array types

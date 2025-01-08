@@ -110,7 +110,7 @@ describe("generateZodSchema", () => {
         const schema = generateZodSchema(type, checker);
 
         expect(schema).toBe(
-            "z.object({ a: z.intersection(z.intersection(z.object({ name: z.string() }), z.object({ age: z.coerce.number() })), z.object({ active: z.boolean() })) })"
+            "z.object({ a: z.object({ name: z.string() }).merge(z.object({ age: z.coerce.number() })).merge(z.object({ active: z.boolean() })) })"
         );
     });
 
