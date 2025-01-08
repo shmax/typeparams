@@ -32,7 +32,8 @@ export class TypeParams<T extends object> {
         const parsed = schema.safeParse(rawParams);
 
         if (!parsed.success) {
-          throw new Error("Invalid query string for the provided schema.");
+          console.error("Invalid query params for the provided schema:", rawParams);
+          return;
         }
 
         this.params = parsed.data as T;
