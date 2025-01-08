@@ -34,9 +34,9 @@ async function getOutputDir(): Promise<string> {
 // Utility to write schemas to the output file
 function writeSchemas(schemas: Record<string, Record<string, string>>) {
     const entries = Object.entries(schemas)
+        .filter(([, schemaMap]) => Object.keys(schemaMap).length > 0)
         .map(([filePath, schemaMap]) => {
             const schemaEntries = Object.entries(schemaMap as Record<string,string>)
-                .filter(([, schemaMap]) => Object.keys(schemaMap).length > 0)
                 .map(([position, schema]) => `    "${position}": ${schema}`)
                 .join(",\n");
             return `  "${filePath}": {\n${schemaEntries}\n  }`;
