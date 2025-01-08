@@ -2,6 +2,10 @@
 export function deserialize(queryString: string): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
+    if (!queryString || queryString.trim() === "") {
+        return result;
+    }
+
     const query = queryString.startsWith("?")
         ? queryString.slice(1)
         : queryString;
