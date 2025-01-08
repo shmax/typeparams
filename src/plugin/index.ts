@@ -11,6 +11,7 @@ type SchemasType = {
 };
 
 type PluginState = {
+    hasTypeParamsUsage: boolean;
     file: {
         opts: {
             filename: string;
@@ -63,8 +64,15 @@ export default function typeparamsBabelPlugin() {
         },
 
         visitor: {
-            Program(path: NodePath<t.Program>) {
-                ensureImport(path);
+            Program: {
+                enter(path: NodePath<t.Program>, state: PluginState) {
+                    state.hasTypeParamsUsage = false; // Initialize tracking state
+                },
+                exit(path: NodePath<t.Program>, state: PluginState) {
+                    if (state.hasTypeParamsUsage) {
+                        ensureImport(path);
+                    }
+                }
             },
             NewExpression(path: NodePath<t.NewExpression>, state: PluginState) {
                 const callee = path.node.callee;
@@ -73,6 +81,7 @@ export default function typeparamsBabelPlugin() {
                     callee.name === "TypeParams" &&
                     path.node.arguments.length > 0
                 ) {
+                    state.hasTypeParamsUsage = true; // Mark that we need the import
                     const filePath = state.file.opts.filename.replace(/\\/g, "/");
                     const { line, column } = path.node.loc!.start;
                     const positionKey = `${line}:${column}`;
