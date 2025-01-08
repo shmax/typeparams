@@ -91,21 +91,29 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): strin
     if (type.flags & ts.TypeFlags.Null) return "z.null()";
     if (type.flags & ts.TypeFlags.Undefined) return "z.undefined()";
 
+    // Handle Union types
     if (type.isUnion()) {
         return `z.union([${type.types.map((t) => generateZodSchema(t, checker)).join(", ")}])`;
     }
 
+    // Handle Intersection types
     if (type.isIntersection()) {
-        return type.types
-            .map((t) => generateZodSchema(t, checker))
-            .reduce((acc, schema) => `z.intersection(${acc}, ${schema})`);
+        const schemas = type.types.map((t) => generateZodSchema(t, checker));
+        // Wrap the entire intersection in `.optional()` if any type is optional
+        const isOptional = type.types.some(
+            (t) => t.flags & ts.TypeFlags.Undefined || t.flags & ts.TypeFlags.Null
+        );
+        const intersection = schemas.reduce((acc, schema) => `z.intersection(${acc}, ${schema})`);
+        return isOptional ? `${intersection}.optional()` : intersection;
     }
 
+    // Handle Array types
     if (checker.isArrayType(type)) {
         const elementType = checker.getTypeArguments(type as ts.TypeReference)[0];
         return `z.array(${generateZodSchema(elementType, checker)})`;
     }
 
+    // Handle Object-like types
     const symbol = type.getSymbol();
     if (symbol) {
         const properties = checker.getPropertiesOfType(type);
@@ -121,7 +129,8 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): strin
         }
     }
 
-    return "z.any()"; // Fallback for unsupported or unknown types
+    // Fallback for unsupported or unknown types
+    return "z.any()";
 }
 
 // Main logic for schema generation
