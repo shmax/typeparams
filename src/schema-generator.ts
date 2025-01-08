@@ -82,7 +82,6 @@ function analyzeFile(filePath: string, program: ts.Program): Record<string, stri
     return schemas;
 }
 
-// Generate Zod schemas for TypeScript types
 export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): string {
     if (type.isStringLiteral()) return `z.literal("${type.value}")`;
     if (type.flags & ts.TypeFlags.String) return "z.string()";
@@ -97,7 +96,9 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): strin
     }
 
     if (type.isIntersection()) {
-        return `z.intersection([${type.types.map((t) => generateZodSchema(t, checker)).join(", ")}])`;
+        return type.types
+            .map((t) => generateZodSchema(t, checker))
+            .reduce((acc, schema) => `z.intersection(${acc}, ${schema})`);
     }
 
     if (checker.isArrayType(type)) {

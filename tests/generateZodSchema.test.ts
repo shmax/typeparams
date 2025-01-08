@@ -102,7 +102,7 @@ describe("generateZodSchema", () => {
     it("should handle intersections", () => {
         const source = `
             type Test = {
-                a: { name: string } & { age: number };
+                a: { name: string } & { age: number } & { active: boolean };
             };
         `;
 
@@ -110,7 +110,7 @@ describe("generateZodSchema", () => {
         const schema = generateZodSchema(type, checker);
 
         expect(schema).toBe(
-            "z.object({ a: z.intersection([z.object({ name: z.string() }), z.object({ age: z.coerce.number() })]) })"
+            "z.object({ a: z.intersection(z.intersection(z.object({ name: z.string() }), z.object({ age: z.coerce.number() })), z.object({ active: z.boolean() })) })"
         );
     });
 
