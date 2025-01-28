@@ -19,7 +19,7 @@ type PathValue<Obj, Path extends string> = Path extends `${infer Key}.${infer Re
     : never;
 
 export class TypeParams<T extends object> {
-  private params: T;
+  private params: T = {} as T;
 
   constructor(
       searchParams: T | string, // Accept an object or a query string
