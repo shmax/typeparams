@@ -42,7 +42,7 @@ export class TypeParams<T extends object> {
       }
     } else {
       // Handle object input
-      this.params = searchParams; // TypeScript validates this against T. No need for zod.
+      this.params = searchParams ?? {};
     }
   }
 
