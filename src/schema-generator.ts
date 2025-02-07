@@ -81,7 +81,7 @@ function analyzeFile(filePath: string, program: ts.Program): Record<string, stri
             const typeNode = node.typeArguments?.[0];
             if (typeNode) {
                 const type = checker.getTypeAtLocation(typeNode);
-                schemas[positionKey] = generateZodSchema(type, checker);
+                schemas[positionKey] = generateZodSchema(type, checker, node);
             }
         }
 
@@ -92,7 +92,30 @@ function analyzeFile(filePath: string, program: ts.Program): Record<string, stri
     return schemas;
 }
 
-export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): string {
+function throwUnsupportedArrayError(
+    type: ts.Type,
+    checker: ts.TypeChecker,
+    node?: ts.Node
+): never {
+    // We’ll build a more detailed message:
+    const symbol = type.getSymbol();
+    const typeName = symbol?.getName() || "(anonymous)";
+
+    // If `node` is provided, we can find the file & line info
+    let fileInfo = "";
+    if (node) {
+        const sourceFile = node.getSourceFile();
+        const { line, character } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+        fileInfo = ` in ${sourceFile.fileName} at line ${line + 1}, col ${character + 1}`;
+    }
+
+    throw new Error(
+        `Unsupported array element type (“${typeName}”)${fileInfo}. ` +
+        `Only string[] and number[] are automatically wrapped with pipeDelimitedArray.`
+    );
+}
+
+export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?: ts.Node): string {
     if (type.isStringLiteral()) return `z.literal("${type.value}")`;
     if (type.flags & ts.TypeFlags.String) return "z.string()";
     if (type.flags & ts.TypeFlags.Number) return "z.coerce.number()";
@@ -136,10 +159,7 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): strin
             return `pipeDelimitedArray(z.coerce.number())`;
         } else {
             // For anything else (objects, booleans, unions, etc.), throw an error
-            throw new Error(
-                "Unsupported array element type in schema generation. " +
-                "Only string[] and number[] are automatically wrapped with pipeDelimitedArray."
-            );
+            throwUnsupportedArrayError(type, checker, node);
         }
     }
 
