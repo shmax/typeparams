@@ -97,10 +97,8 @@ function throwUnsupportedArrayError(
     checker: ts.TypeChecker,
     node?: ts.Node
 ): never {
-    // We’ll build a more detailed message:
     const symbol = type.getSymbol();
-    const typeName = symbol?.getName() || "(anonymous)";
-
+    const typeName = symbol?.getName() ?? checker.typeToString(type);
     // If `node` is provided, we can find the file & line info
     let fileInfo = "";
     if (node) {
@@ -126,12 +124,12 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?:
 
     // Handle Union types
     if (type.isUnion()) {
-        return `z.union([${type.types.map((t) => generateZodSchema(t, checker)).join(", ")}])`;
+        return `z.union([${type.types.map((t) => generateZodSchema(t, checker, node)).join(", ")}])`;
     }
 
     // Handle Intersection types
     if (type.isIntersection()) {
-        const objectSchemas = type.types.map((t) => generateZodSchema(t, checker));
+        const objectSchemas = type.types.map((t) => generateZodSchema(t, checker, node));
         // Use `.merge()` for merging objects, if all components are objects
         const mergedSchemas = objectSchemas.reduce((acc, schema) => {
             if (acc) return `${acc}.merge(${schema})`;
@@ -159,7 +157,8 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?:
             return `pipeDelimitedArray(z.coerce.number())`;
         } else {
             // For anything else (objects, booleans, unions, etc.), throw an error
-            throwUnsupportedArrayError(type, checker, node);
+            const symbol = elementType.getSymbol();
+            throwUnsupportedArrayError(elementType, checker, node);
         }
     }
 
@@ -172,7 +171,7 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?:
                 .map((prop) => {
                     const propType = checker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
                     const isOptional = prop.flags & ts.SymbolFlags.Optional;
-                    return `${prop.getName()}: ${isOptional ? `${generateZodSchema(propType, checker)}.optional()` : generateZodSchema(propType, checker)}`;
+                    return `${prop.getName()}: ${isOptional ? `${generateZodSchema(propType, checker, node)}.optional()` : generateZodSchema(propType, checker, node)}`;
                 })
                 .join(", ");
             return `z.object({ ${zodProps} })`;
