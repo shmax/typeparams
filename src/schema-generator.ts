@@ -113,6 +113,12 @@ function throwUnsupportedArrayError(
     );
 }
 
+function isStringLiteralUnion(type: ts.Type): boolean {
+    if (!type.isUnion()) return false;
+    // Check if *every* subtype is a string literal
+    return type.types.every((t) => t.isStringLiteral());
+}
+
 export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?: ts.Node): string {
     if (type.isStringLiteral()) return `z.literal("${type.value}")`;
     if (type.flags & ts.TypeFlags.String) return "z.string()";
@@ -146,8 +152,9 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?:
         // One simplistic approach is to check type flags:
         const isStringLike = (elementType.flags & ts.TypeFlags.StringLike) !== 0;
         const isNumberLike = (elementType.flags & ts.TypeFlags.NumberLike) !== 0;
+        const isStringLiteralUnionType = isStringLiteralUnion(elementType);
 
-        if (isStringLike) {
+        if (isStringLike || isStringLiteralUnionType) {
             // We'll rely on the existing logic to generate the element's schema
             // But typically you'd want "z.string()"
             // Or you can skip the generator call and just do "z.string()" directly
@@ -157,7 +164,6 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?:
             return `pipeDelimitedArray(z.coerce.number())`;
         } else {
             // For anything else (objects, booleans, unions, etc.), throw an error
-            const symbol = elementType.getSymbol();
             throwUnsupportedArrayError(elementType, checker, node);
         }
     }
