@@ -81,7 +81,7 @@ describe("generateZodSchema", () => {
         const { type, checker } = createTypeFromText(source, "Test");
         const schema = generateZodSchema(type, checker);
 
-        expect(schema).toBe("z.object({ list: z.array(z.string()) })");
+        expect(schema).toBe("z.object({ list: pipeDelimitedArray(z.string()) })");
     });
 
     it("should handle unions", () => {

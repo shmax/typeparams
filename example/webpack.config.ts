@@ -36,6 +36,7 @@ const config: Configuration = {
                 include: [
                     path.resolve(__dirname, "src"), // Include example files
                     path.resolve(__dirname, "../src"), // Include shared code
+                    path.resolve(__dirname, ".generated-schemas"),
                 ],
                 exclude: /node_modules/,
             },

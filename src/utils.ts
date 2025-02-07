@@ -1,4 +1,3 @@
-
 export function deserialize(queryString: string): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
@@ -12,17 +11,18 @@ export function deserialize(queryString: string): Record<string, unknown> {
     const params = query.split("&");
 
     for (const param of params) {
-        const [rawKey, rawValue] = param.split("=");
-        const key = decodeURIComponent(rawKey); // Decode the key
-        const value = decodeURIComponent(rawValue); // Decode the value
+        const [rawKey, rawValue = ""] = param.split("=");
+        const key = decodeURIComponent(rawKey);
+        const value = decodeURIComponent(rawValue);
 
+        // Construct nested objects by splitting on "_"
         const keys = key.split("_");
         let current: Record<string, unknown> = result;
 
         keys.forEach((k, index) => {
             if (index === keys.length - 1) {
-                // Handle pipe-delimited arrays
-                current[k] = value.includes("|") ? value.split("|") : value;
+                // Final key, assign the raw string
+                current[k] = value;
             } else {
                 if (typeof current[k] !== "object" || current[k] === null) {
                     current[k] = {};

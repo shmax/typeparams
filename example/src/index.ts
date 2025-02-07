@@ -16,7 +16,11 @@ const toyline = params.get("filters.toyline");
 
 console.log("toyline", typeof toyline, toyline);
 console.log("foo2", params.get("filters.foo2"));
+console.log("tags", params.get("filters.tags"))
 params.set("filters.toyline", 1257);
+
+const url = `?${params}`;
+console.log("url", url);
 
 // or with an object (note that this is equivalent to the line above in that will deep merge atop existing values by default, but you can pass false
 // to the second param if you want to wipe existing data)

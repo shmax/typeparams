@@ -3,7 +3,6 @@
     "@babel/preset-env",
     "@babel/preset-typescript"
   ],
-  "ignore": ["**/.generated-schemas/**"],
   "plugins": [
     ["../src/plugin"]
   ]

@@ -46,6 +46,16 @@ function writeSchemas(schemas: Record<string, Record<string, string>>) {
     const content = `// Auto-generated file. Do not edit manually.
 import { z } from 'zod';
 
+function pipeDelimitedArray(elementSchema: any) {
+  return z.preprocess((val) => {
+    if (typeof val === 'string') {
+      // Split on "|" unless the string is empty => []
+      return val === '' ? [] : val.split('|');
+    }
+    return val;
+  }, z.array(elementSchema));
+}
+
 export const schemas = {
 ${entries}
 };`;
@@ -109,8 +119,28 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker): strin
 
     // Handle Array types
     if (checker.isArrayType(type)) {
-        const elementType = checker.getTypeArguments(type as ts.TypeReference)[0];
-        return `z.array(${generateZodSchema(elementType, checker)})`;
+        const [elementType] = checker.getTypeArguments(type as ts.TypeReference);
+
+        // Figure out if it's string[], number[], or something else.
+        // One simplistic approach is to check type flags:
+        const isStringLike = (elementType.flags & ts.TypeFlags.StringLike) !== 0;
+        const isNumberLike = (elementType.flags & ts.TypeFlags.NumberLike) !== 0;
+
+        if (isStringLike) {
+            // We'll rely on the existing logic to generate the element's schema
+            // But typically you'd want "z.string()"
+            // Or you can skip the generator call and just do "z.string()" directly
+            return `pipeDelimitedArray(z.string())`;
+        } else if (isNumberLike) {
+            // Coerce numbers from strings
+            return `pipeDelimitedArray(z.coerce.number())`;
+        } else {
+            // For anything else (objects, booleans, unions, etc.), throw an error
+            throw new Error(
+                "Unsupported array element type in schema generation. " +
+                "Only string[] and number[] are automatically wrapped with pipeDelimitedArray."
+            );
+        }
     }
 
     // Handle Object-like types

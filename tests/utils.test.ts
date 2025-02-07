@@ -1,31 +1,10 @@
 import { deserialize, serialize } from "../src/utils";
 
 describe("deserialize", () => {
-    it("should convert pipe-delimited values into arrays", () => {
-        const input = "?filters_tags=Walmart|Dollar%20Store";
-        const expected = {
-            filters: {
-                tags: ["Walmart", "Dollar Store"],
-            },
-        };
-        expect(deserialize(input)).toEqual(expected);
-    });
-
     it("should handle single values as strings", () => {
         const input = "?filters_toyline=355";
         const expected = {
             filters: {
-                toyline: "355",
-            },
-        };
-        expect(deserialize(input)).toEqual(expected);
-    });
-
-    it("should handle mixed keys and arrays", () => {
-        const input = "?filters_tags=Walmart|Dollar%20Store&filters_toyline=355";
-        const expected = {
-            filters: {
-                tags: ["Walmart", "Dollar Store"],
                 toyline: "355",
             },
         };
