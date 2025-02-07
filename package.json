@@ -1,6 +1,6 @@
 {
   "name": "@shmax-org/typeparams",
-  "version": "1.0.1-rc.2",
+  "version": "1.0.1-rc.3",
   "description": "Type-safe query string management and Zod schema generation.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
