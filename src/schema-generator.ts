@@ -155,9 +155,6 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?:
         const isStringLiteralUnionType = isStringLiteralUnion(elementType);
 
         if (isStringLike || isStringLiteralUnionType) {
-            // We'll rely on the existing logic to generate the element's schema
-            // But typically you'd want "z.string()"
-            // Or you can skip the generator call and just do "z.string()" directly
             return `pipeDelimitedArray(z.string())`;
         } else if (isNumberLike) {
             // Coerce numbers from strings
