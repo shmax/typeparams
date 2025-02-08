@@ -3,6 +3,7 @@ import { TypeParams } from '../../src/type-params';
 // Define the type for filters
 type Filters = {
     filters: {
+        puppies?: boolean;
         toyline: number;
         tags?: Array<string>;
         foo2?: number;
@@ -10,10 +11,13 @@ type Filters = {
 };
 
 // Create an instance of TypeParams with a query string
-const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar&filters_foo2=3");
+const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar&filters_foo2=3&filters_puppies=true");
 // Accessing individual parameters
 const toyline = params.get("filters.toyline");
+const puppies = params.get("filters.puppies");
 
+console.log("all", params.all());
+console.log("puppies", typeof puppies, puppies);
 console.log("toyline", typeof toyline, toyline);
 console.log("foo2", params.get("filters.foo2"));
 console.log("tags", params.get("filters.tags"))

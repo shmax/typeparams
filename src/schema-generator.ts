@@ -123,7 +123,7 @@ export function generateZodSchema(type: ts.Type, checker: ts.TypeChecker, node?:
     if (type.isStringLiteral()) return `z.literal("${type.value}")`;
     if (type.flags & ts.TypeFlags.String) return "z.string()";
     if (type.flags & ts.TypeFlags.Number) return "z.coerce.number()";
-    if (type.flags & ts.TypeFlags.Boolean) return "z.boolean()";
+    if (type.flags & ts.TypeFlags.Boolean) return "z.coerce.boolean()";
     if (type.flags & ts.TypeFlags.Any) return "z.any()";
     if (type.flags & ts.TypeFlags.Null) return "z.null()";
     if (type.flags & ts.TypeFlags.Undefined) return "z.undefined()";
