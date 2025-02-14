@@ -67,7 +67,7 @@ describe("generateZodSchema", () => {
         const schema = generateZodSchema(type, checker);
 
         expect(schema).toBe(
-            "z.object({ str: z.string(), num: z.coerce.number(), bool: z.boolean() })"
+            "z.object({ str: z.string(), num: z.coerce.number(), bool: z.coerce.boolean() })"
         );
     });
 
@@ -110,7 +110,7 @@ describe("generateZodSchema", () => {
         const schema = generateZodSchema(type, checker);
 
         expect(schema).toBe(
-            "z.object({ a: z.object({ name: z.string() }).merge(z.object({ age: z.coerce.number() })).merge(z.object({ active: z.boolean() })) })"
+            "z.object({ a: z.object({ name: z.string() }).merge(z.object({ age: z.coerce.number() })).merge(z.object({ active: z.coerce.boolean() })) })"
         );
     });
 
