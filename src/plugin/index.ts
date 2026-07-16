@@ -6,7 +6,7 @@ import * as ts from "typescript";
 import { generateZodSchema } from "../zod-schema-generator";
 
 // ── TypeScript program cache ──────────────────────────────────────────────────
-// One program is shared across all files compiled in the same rspack run.
+// One program is shared across all files compiled in the same build or watch run.
 // We rebuild incrementally (passing the old program) at most once every
 // CACHE_TTL_MS milliseconds so a rapid burst of saves doesn't spin up
 // multiple compiler instances. Incremental rebuilds only re-parse changed
