@@ -4,10 +4,10 @@ TypeParams is a TypeScript-first replacement for `URLSearchParams` that brings t
 
 ## Features
 
-- **Zero config** — no generated files, no separate build step, no schemas to maintain
-- **Automatic type coercion** — `"25"` from the URL becomes `25` (number) automatically
+- **Automatic type coercion** — values from the URL are parsed according to your TypeScript types (for example, `"25"` becomes `25` when the schema says `number`)
 - **Type-safe reads and writes** — wrong key or wrong value type is a compile error
 - **Always in sync** — the schema is derived fresh from your TypeScript types on every compile
+- **Zero config** — no generated files, no separate build step, no schemas to maintain
 
 ---
 
