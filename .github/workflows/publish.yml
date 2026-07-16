@@ -34,6 +34,12 @@ jobs:
           cache: "yarn"
           registry-url: 'https://registry.npmjs.org'
 
+      # Ensure the package scope resolves to npmjs.org in CI.
+      - name: Configure npm registry
+        run: |
+          npm config set @shmax-org:registry https://registry.npmjs.org/
+          npm config set registry https://registry.npmjs.org/
+
       # Install dependencies
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -42,8 +48,13 @@ jobs:
       - name: Build project
         run: yarn build
 
+      - name: Verify npm registry
+        run: |
+          npm config get registry
+          npm config get @shmax-org:registry
+
       # Publish to npm
       - name: Publish to npm
-        run: npm publish --provenance --access public --tag $PUBLISH_TAG
+        run: npm publish --provenance --access public --tag $PUBLISH_TAG --registry https://registry.npmjs.org/
 
 
