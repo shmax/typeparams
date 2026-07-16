@@ -60,7 +60,7 @@ export default function typeparamsBabelPlugin() {
 
     return {
         async pre() {
-            loadSchemas();
+            await loadSchemas();
         },
 
         visitor: {
