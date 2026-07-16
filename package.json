@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "typeparams-gen": "./dist/schema-generator.js"
+    "typeparams-gen": "dist/schema-generator.js"
   },
   "files": [
     "dist"
@@ -37,7 +37,10 @@
     "ts-node": "^10.9.2",
     "typescript-eslint": "^8.19.0"
   },
-  "repository": "https://github.com/shmax/typeparams.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shmax/typeparams.git"
+  },
   "author": "shmax <shmax@shmax.com>",
   "license": "MIT",
   "homepage": "https://github.com/shmax/typeparams#readme",
