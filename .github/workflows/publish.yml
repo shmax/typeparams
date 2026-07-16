@@ -44,6 +44,6 @@ jobs:
 
       # Publish to npm
       - name: Publish to npm
-        run: npm publish --provenance --tag $PUBLISH_TAG
+        run: npm publish --provenance --access public --tag $PUBLISH_TAG
 
 
