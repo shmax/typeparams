@@ -7,7 +7,7 @@ TypeParams is a TypeScript-first replacement for `URLSearchParams` that brings t
 - **Automatic type coercion** — values from the URL are parsed according to your TypeScript types (for example, `"25"` becomes `25` when the schema says `number`)
 - **Type-safe reads and writes** — wrong key or wrong value type is a compile error
 - **Always in sync** — the schema is derived fresh from your TypeScript types on every compile
-- **Zero config** — no generated files, no separate build step, no schemas to maintain
+- **Zero config** — no separate build step, no schemas to maintain
 
 ---
 
@@ -27,7 +27,7 @@ const params = new TypeParams(location.search, z.object({
 }));
 ```
 
-The TypeScript generic is erased as normal. There are no generated files on disk.
+The TypeScript generic is erased as normal. The schema is embedded directly into the compiled output.
 
 ---
 
@@ -123,19 +123,6 @@ Supported element types: `string[]` and `number[]`.
 
 ---
 
-## Standalone schema generation (optional)
-
-The `typeparams-gen` CLI tool is still available if you want to generate a static snapshot of your schemas for inspection or debugging:
-
-```sh
-typeparams-gen          # generate once
-typeparams-gen --watch  # regenerate on file changes
-```
-
-This is entirely optional — the Babel plugin works independently and does not depend on any generated files.
-
----
-
 ## Requirements
 
 - Node.js 14+
@@ -146,8 +133,8 @@ This is entirely optional — the Babel plugin works independently and does not 
 
 ## FAQ
 
-**Q: Do I need to run any code generation step?**  
-A: No. There is no `yarn generate-schemas`, no `.generated-schemas` directory, no cron job, no vibes-based manual step. The Babel plugin figures everything out at compile time and inlines the schema directly. You write the interface; the universe handles the rest.
+**Q: Do I need any extra setup or build step?**  
+A: No. Add the Babel plugin and you are done. It figures everything out at compile time and inlines the schema directly. You write the interface; the universe handles the rest.
 
 **Q: What if my schema interface is defined in another file?**  
 A: Works fine. The plugin runs the full TypeScript compiler under the hood, so it resolves imports and cross-file types exactly the same way `tsc` does. Spread your types across as many files as you like.
@@ -159,7 +146,7 @@ A: Nothing. Genuinely nothing. Go wild.
 A: No — TypeParams needs TypeScript type information to do its thing. If you're not using TypeScript, you're also presumably fine with `parseInt` everywhere, and we wish you well.
 
 **Q: Can I use `TypeParams` multiple times in the same file with different types?**  
-A: Yes. Each `new TypeParams<T>(...)` call gets its own independently generated schema. Two calls, two schemas, zero drama.
+A: Yes. Each `new TypeParams<T>(...)` call gets its own schema. Two calls, two schemas, zero drama.
 
 ---
 
