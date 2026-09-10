@@ -29,15 +29,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "yarn"
+          scope: "@shmax-org"
+          always-auth: true
           registry-url: "https://registry.npmjs.org"
-
-      # Ensure the package scope resolves to npmjs.org in CI.
-      - name: Configure npm registry
-        run: |
-          npm config set @shmax-org:registry https://registry.npmjs.org/
-          npm config set registry https://registry.npmjs.org/
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -50,5 +46,18 @@ jobs:
           npm config get registry
           npm config get @shmax-org:registry
 
-      - name: Publish to npm
-        run: npm publish --provenance --access public --tag "$PUBLISH_TAG" --registry https://registry.npmjs.org/
+      - name: Verify npm auth token
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm (token)
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: npm publish --provenance --access public --tag "$PUBLISH_TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm (trusted publishing)
+        if: ${{ secrets.NPM_TOKEN == '' }}
+        run: npm publish --provenance --access public --tag "$PUBLISH_TAG"
