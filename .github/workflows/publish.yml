@@ -21,7 +21,6 @@ jobs:
       id-token: write
     env:
       PUBLISH_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || 'next' }}
-      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
 
     steps:
       - name: Checkout code
@@ -33,7 +32,6 @@ jobs:
           node-version: 22
           cache: "yarn"
           scope: "@shmax-org"
-          always-auth: true
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
@@ -42,23 +40,5 @@ jobs:
       - name: Build project
         run: yarn build
 
-      - name: Verify npm registry
-        run: |
-          npm config get registry
-          npm config get @shmax-org:registry
-
-      - name: Verify npm auth token
-        if: env.HAS_NPM_TOKEN == 'true'
-        run: npm whoami
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish to npm (token)
-        if: env.HAS_NPM_TOKEN == 'true'
-        run: npm publish --provenance --access public --tag "$PUBLISH_TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish to npm (trusted publishing)
-        if: env.HAS_NPM_TOKEN != 'true'
+      - name: Publish to npm
         run: npm publish --provenance --access public --tag "$PUBLISH_TAG"
