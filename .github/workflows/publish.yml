@@ -1,16 +1,10 @@
 name: Publish to npm
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "npm dist-tag (e.g., latest, next, rc)"
-        required: false
-        default: "next"
   push:
     tags:
       - "v*"
-      - "[0-9]*"
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -18,8 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      PUBLISH_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || 'next' }}
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -30,17 +23,6 @@ jobs:
         with:
           node-version: 22
           cache: "yarn"
-          scope: "@shmax-org"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Validate npm token exists
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "NPM_TOKEN secret is required. Add it in GitHub repo settings: Secrets and variables > Actions > New repository secret (name: NPM_TOKEN)."
-            exit 1
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -48,12 +30,5 @@ jobs:
       - name: Build project
         run: yarn build
 
-      - name: Verify npm auth
-        run: npm whoami
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish to npm
-        run: npm publish --access public --tag "$PUBLISH_TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public --registry https://registry.npmjs.org/
