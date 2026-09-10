@@ -4,12 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'npm dist-tag (e.g., latest, next, rc)'
+        description: "npm dist-tag (e.g., latest, next, rc)"
         required: false
-        default: 'next'
+        default: "next"
   push:
     tags:
-      - '[0-9]*'
+      - "v*"
+      - "[0-9]*"
 
 jobs:
   publish:
@@ -22,17 +23,15 @@ jobs:
       PUBLISH_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || 'next' }}
 
     steps:
-      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: "yarn"
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
 
       # Ensure the package scope resolves to npmjs.org in CI.
       - name: Configure npm registry
@@ -40,11 +39,9 @@ jobs:
           npm config set @shmax-org:registry https://registry.npmjs.org/
           npm config set registry https://registry.npmjs.org/
 
-      # Install dependencies
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # Build the project
       - name: Build project
         run: yarn build
 
@@ -53,8 +50,5 @@ jobs:
           npm config get registry
           npm config get @shmax-org:registry
 
-      # Publish to npm
       - name: Publish to npm
-        run: npm publish --provenance --access public --tag $PUBLISH_TAG --registry https://registry.npmjs.org/
-
-
+        run: npm publish --provenance --access public --tag "$PUBLISH_TAG" --registry https://registry.npmjs.org/
