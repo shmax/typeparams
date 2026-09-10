@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
     env:
       PUBLISH_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || 'next' }}
 
@@ -31,9 +30,17 @@ jobs:
         with:
           node-version: 22
           cache: "yarn"
+          scope: "@shmax-org"
+          registry-url: "https://registry.npmjs.org"
 
-      - name: Ensure npm registry
-        run: npm config set registry https://registry.npmjs.org/
+      - name: Validate npm token exists
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN secret is required. Add it in GitHub repo settings: Secrets and variables > Actions > New repository secret (name: NPM_TOKEN)."
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -41,5 +48,12 @@ jobs:
       - name: Build project
         run: yarn build
 
+      - name: Verify npm auth
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish to npm
-        run: npm publish --provenance --access public --tag "$PUBLISH_TAG" --registry https://registry.npmjs.org/
+        run: npm publish --access public --tag "$PUBLISH_TAG"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
