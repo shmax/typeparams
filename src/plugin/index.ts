@@ -1,9 +1,40 @@
 import * as t from "@babel/types";
 import * as babelParser from "@babel/parser";
 import path from "path";
+import fs from "fs";
 import { type NodePath } from "@babel/core";
 import * as ts from "typescript";
 import { generateZodSchema } from "../zod-schema-generator";
+import { type TypeparamsConfig } from "./typeparams-config";
+
+// ── Config loading ─────────────────────────────────────────────────────────────
+// Babel plugins run synchronously, so config loading can't use dynamic
+// `import()` (which is how the old schema-generator CLI read TS config
+// files). We support plain JS/CJS/JSON config files instead — the same
+// restriction tools like babel.config.js and jest.config.js live with, for
+// the same reason.
+let cachedConfig: TypeparamsConfig | null = null;
+
+function loadConfig(): TypeparamsConfig {
+    if (cachedConfig) return cachedConfig;
+    const candidates = ["typeparams-config.js", "typeparams-config.cjs", "typeparams-config.json"];
+    for (const candidate of candidates) {
+        const configPath = path.resolve(process.cwd(), candidate);
+        if (fs.existsSync(configPath)) {
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const loaded = require(configPath);
+                cachedConfig = (loaded?.default ?? loaded) as TypeparamsConfig;
+                return cachedConfig;
+            } catch (err) {
+                console.error(`[TypeParams] Failed to load ${candidate}. Falling back to defaults.`, err);
+                break;
+            }
+        }
+    }
+    cachedConfig = {};
+    return cachedConfig;
+}
 
 // ── TypeScript program cache ──────────────────────────────────────────────────
 // One program is shared across all files compiled in the same build or watch run.
@@ -21,8 +52,15 @@ function getProgram(): ts.Program {
     if (cachedProgram && now - lastBuildTime < CACHE_TTL_MS) {
         return cachedProgram;
     }
-    const srcDir = path.resolve(process.cwd(), "src");
-    const files = ts.sys.readDirectory(srcDir, [".ts", ".tsx"]);
+    // Which directories to scan is configurable (see TypeparamsConfig.roots)
+    // since call sites can live outside `src/` — e.g. Next.js App Router
+    // projects also keep pages under `app/`. Only scan roots that actually
+    // exist so a stale config entry doesn't throw.
+    const { roots: configuredRoots } = loadConfig();
+    const roots = (configuredRoots ?? ["src"])
+        .map((dir) => path.resolve(process.cwd(), dir))
+        .filter((dir) => fs.existsSync(dir));
+    const files = roots.flatMap((dir) => ts.sys.readDirectory(dir, [".ts", ".tsx"]));
     cachedProgram = ts.createProgram(
         files,
         { target: ts.ScriptTarget.ESNext, strict: false, skipLibCheck: true, noEmit: true },
