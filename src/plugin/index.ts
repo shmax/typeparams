@@ -22,7 +22,7 @@ function loadConfig(): TypeparamsConfig {
         const configPath = path.resolve(process.cwd(), candidate);
         if (fs.existsSync(configPath)) {
             try {
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
                 const loaded = require(configPath);
                 cachedConfig = (loaded?.default ?? loaded) as TypeparamsConfig;
                 return cachedConfig;
