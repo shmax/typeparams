@@ -31,8 +31,9 @@ jobs:
         with:
           node-version: 22
           cache: "yarn"
-          scope: "@shmax-org"
-          registry-url: "https://registry.npmjs.org"
+
+      - name: Ensure npm registry
+        run: npm config set registry https://registry.npmjs.org/
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -41,4 +42,4 @@ jobs:
         run: yarn build
 
       - name: Publish to npm
-        run: npm publish --provenance --access public --tag "$PUBLISH_TAG"
+        run: npm publish --provenance --access public --tag "$PUBLISH_TAG" --registry https://registry.npmjs.org/
