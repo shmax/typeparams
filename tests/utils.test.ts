@@ -1,4 +1,4 @@
-import { deserialize, serialize } from "../src/utils";
+import { deserialize, nestFlatObject, serialize } from "../src/utils";
 
 describe("deserialize", () => {
     it("should handle single values as strings", () => {
@@ -9,6 +9,47 @@ describe("deserialize", () => {
             },
         };
         expect(deserialize(input)).toEqual(expected);
+    });
+});
+
+describe("nestFlatObject", () => {
+    it("should nest flat \"_\"-delimited keys", () => {
+        const input = {
+            filters_toyline: "355",
+            limit: "25",
+        };
+        const expected = {
+            filters: {
+                toyline: "355",
+            },
+            limit: "25",
+        };
+        expect(nestFlatObject(input)).toEqual(expected);
+    });
+
+    it("should preserve array values as-is", () => {
+        const input = {
+            filters_tags: ["Walmart", "Dollar Store"],
+        };
+        const expected = {
+            filters: {
+                tags: ["Walmart", "Dollar Store"],
+            },
+        };
+        expect(nestFlatObject(input)).toEqual(expected);
+    });
+
+    it("should skip undefined values", () => {
+        const input = {
+            filters_toyline: "355",
+            p: undefined,
+        };
+        const expected = {
+            filters: {
+                toyline: "355",
+            },
+        };
+        expect(nestFlatObject(input)).toEqual(expected);
     });
 });
 

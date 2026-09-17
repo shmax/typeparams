@@ -1,6 +1,13 @@
-import { deserialize, serialize } from "./utils";
+import { deserialize, nestFlatObject, serialize } from "./utils";
 
 import { type ZodSchema } from 'zod';
+
+/**
+ * A flat, already-parsed query string object — the shape Next.js App Router's
+ * `searchParams` and WHATWG `URLSearchParams` produce (each value already
+ * URL-decoded). Distinct from `T`, which is the typed, nested form.
+ */
+export type FlatSearchParams = Record<string, string | string[] | undefined>;
 
 type NestedKeyOf<ObjectType extends object> = {
   [Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
@@ -22,7 +29,7 @@ export class TypeParams<T extends object> {
   private params: T = {} as T;
 
   constructor(
-      searchParams: T | string, // Accept an object or a query string
+      searchParams: T | string | FlatSearchParams, // Accept a typed object, a query string, or a flat parsed object
       schema?: ZodSchema<unknown>
   ) {
     if (typeof searchParams === "string") {
@@ -40,9 +47,23 @@ export class TypeParams<T extends object> {
       } else {
         this.params = rawParams as T;
       }
+    } else if (schema) {
+      // Handle a flat, already-parsed query string object (e.g. Next.js
+      // `searchParams`): nest the "_"-delimited keys, then coerce with the
+      // schema. This is the object equivalent of the string path above,
+      // minus the "&"/"=" splitting and URL-decoding.
+      const rawParams = nestFlatObject(searchParams as FlatSearchParams);
+      const parsed = schema.safeParse(rawParams);
+
+      if (!parsed.success) {
+        console.error("Invalid query params for the provided schema:", rawParams);
+        return;
+      }
+
+      this.params = parsed.data as T;
     } else {
-      // Handle object input
-      this.params = searchParams ?? {};
+      // Handle a typed object input (already in T's shape)
+      this.params = (searchParams ?? {}) as T;
     }
   }
 

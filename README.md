@@ -79,6 +79,14 @@ import { TypeParams } from "@shmax-org/typeparams";
 const params = new TypeParams<ProductsUrlSchema>(location.search);
 ```
 
+`TypeParams` also accepts an already-parsed query object — the shape Next.js App Router's `searchParams` and WHATWG `URLSearchParams` produce (each value a `string`, `string[]`, or `undefined`):
+
+```ts
+const params = new TypeParams<ProductsUrlSchema>(searchParams);
+```
+
+Flat `_`-delimited keys from a parsed object are nested and coerced exactly like the string form, so `filters_toyline=355` becomes `{ filters: { toyline: 355 } }`.
+
 ### 3. Values are automatically coerced to their declared types
 
 ```ts
