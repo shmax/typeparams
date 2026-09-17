@@ -156,6 +156,26 @@ A: No — TypeParams needs TypeScript type information to do its thing. If you'r
 **Q: Can I use `TypeParams` multiple times in the same file with different types?**  
 A: Yes. Each `new TypeParams<T>(...)` call gets its own schema. Two calls, two schemas, zero drama.
 
+**Q: Can I use this on the server side?**  
+A: Yes — it's runtime code, so it works anywhere Node runs. It's a natural fit for Next.js App Router, where `searchParams` is already a parsed (and awaited) object. Just pass it straight in:
+
+```ts
+// app/products/page.tsx
+import { TypeParams } from "@shmax-org/typeparams";
+import { type ProductsUrlSchema } from "./Products";
+
+const ProductsPage = async ({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) => {
+  const params = new TypeParams<ProductsUrlSchema>(await searchParams);
+
+  const filters = params.get("filters");  // fully typed, coerced
+  const p = params.get("p") ?? 1;         // number, not string
+
+  return <Products initialParams={params.all()} />;
+};
+```
+
+On the server the input is the flat `searchParams` object; on the client the same class takes `location.search` or a typed object. The schema is embedded at build time either way, so the same interface drives both.
+
 ---
 
 ## License
