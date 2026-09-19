@@ -1,4 +1,6 @@
-import { TypeParams } from "./type-params";
+import { type FlatSearchParams, TypeParams } from "./type-params";
+
+import { serialize } from "./utils";
 
 import { type ZodSchema } from "zod";
 
@@ -112,14 +114,26 @@ export type ValidateQueryString<T extends object, S extends string> =
  * Values whose contents aren't known until runtime (a plain `string` such as
  * `location.search`) are passed through unchecked and validated by the schema
  * at runtime instead.
+ *
+ * Also accepts a typed object or a flat parsed object (the `searchParams` shape),
+ * mirroring the `TypeParams` constructor.
  */
 export function typeParams<T extends object>() {
-  return function parse<S extends string>(
+  function parse<S extends string>(
       queryString: S extends string ? ValidateQueryString<T, S> : never,
       schema?: ZodSchema<unknown>
+  ): TypeParams<T>;
+  function parse(
+      searchParams: T | FlatSearchParams,
+      schema?: ZodSchema<unknown>
+  ): TypeParams<T>;
+  function parse(
+      searchParams: string | T | FlatSearchParams,
+      schema?: ZodSchema<unknown>
   ): TypeParams<T> {
-    return new TypeParams<T>(queryString, schema);
-  };
+    return new TypeParams<T>(searchParams, schema);
+  }
+  return parse;
 }
 
 /**
@@ -137,4 +151,18 @@ export function queryString<T extends object>() {
   ): S {
     return qs;
   };
+}
+
+/**
+ * Serializes a typed object into a `_`-delimited query string (the inverse of
+ * the object form of `typeParams`). No leading `?` is added, matching
+ * `TypeParams#toString`.
+ *
+ * ```ts
+ * toQueryString<Filters>({ filters: { toyline: 3, tags: ["foo", "bar"] } });
+ * // "filters_toyline=3&filters_tags=foo|bar"
+ * ```
+ */
+export function toQueryString<T extends object>(params: T): string {
+  return serialize(params);
 }

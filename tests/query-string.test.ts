@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { pipeDelimitedArray } from "../src/pipe-delimited-array";
-import { queryString, typeParams, TypeParams } from "../src";
+import { queryString, toQueryString, typeParams, TypeParams } from "../src";
 
 interface Shape {
     filters?: {
@@ -87,5 +87,28 @@ describe("typeParams", () => {
 
         // @ts-expect-error - "banana" is not a valid number for `count`
         queryString<ValueShape>()("?count=banana");
+    });
+
+    it("should accept a typed object", () => {
+        const params = typeParams<ValueShape>()({ count: 3, enabled: true });
+
+        expect(params).toBeInstanceOf(TypeParams);
+        expect(params.get("count")).toBe(3);
+        expect(params.get("enabled")).toBe(true);
+    });
+
+    it("should accept a flat parsed object", () => {
+        const params = typeParams<Shape>()(
+            { filters_toyline: "355", limit: "25" },
+            schema
+        );
+
+        expect(params.get("limit")).toBe(25);
+        expect(params.get("filters")).toEqual({ toyline: "355" });
+    });
+
+    it("should serialize a typed object to a query string", () => {
+        const qs = toQueryString<ValueShape>({ count: 3, enabled: true, numbers: [1, 2], mode: "asc" });
+        expect(qs).toBe("count=3&enabled=true&numbers=1%7C2&mode=asc");
     });
 });
