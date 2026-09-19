@@ -88,22 +88,18 @@ type CheckSegment<T extends object, Seg extends string> =
             ? never
             : `Invalid query string key: "${Seg}"`;
 
-/**
- * `S` when the literal query string is valid for `T`, otherwise a descriptive
- * string naming the offending keys/values (surfaced as a compile error).
- *
- * A plain `string` resolves to `never` — `queryString` is for literals whose
- * contents are known at compile time; runtime strings go through `TypeParams`.
- */
-export type ValidateQueryString<T extends object, S extends string> =
-    string extends S
-        ? never
-        : [QueryStringErrors<T, S>] extends [never] ? S : QueryStringErrors<T, S>;
-
+/** The union of problems (invalid keys or values) in `S`, or `never` if valid. */
 type QueryStringErrors<T extends object, S extends string> =
     SplitAmp<StripQuestionMark<S>> extends infer Seg
         ? Seg extends string ? CheckSegment<T, Seg> : never
         : never;
+
+/**
+ * `S` when the literal query string is valid for `T`, otherwise a descriptive
+ * string naming the offending keys/values (surfaced as a compile error).
+ */
+export type ValidateQueryString<T extends object, S extends string> =
+    [QueryStringErrors<T, S>] extends [never] ? S : QueryStringErrors<T, S>;
 
 /**
  * Checks a literal query string against `T` at compile time and returns it
