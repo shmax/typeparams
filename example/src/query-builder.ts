@@ -37,7 +37,7 @@ console.log("url", url);
 // ── Check: validate a hand-written literal at compile time ───────────────────
 // `queryString` validates the keys and values of a literal query string and
 // returns it tagged as `QueryString<Filters>`.
-function legacyProductsUrl(): QueryString<Filters> {
+function legacyProductsUrl() {
     return queryString<Filters>()("?filters_toyline=7&filters_puppies=true");
 }
 

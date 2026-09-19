@@ -30,8 +30,9 @@ export class TypeParams<T extends object> {
 
   /**
    * Creates a `TypeParams` from a runtime value — a query string, a flat parsed
-   * object, or a typed object. For a literal query string, prefer the
-   * `typeParams<T>()` factory, which also type-checks it at compile time.
+   * object, or a typed object. For a hand-written literal query string, use
+   * `queryString<T>()("...")` to validate its keys and values at compile time
+   * before handing the result to this constructor.
    */
   constructor(
       searchParams: T | string | FlatSearchParams, // Accept a typed object, a query string, or a flat parsed object
