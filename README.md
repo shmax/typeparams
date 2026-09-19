@@ -9,6 +9,7 @@ Under the hood, a Zod validation schema is generated from your TypeScript types 
 - **Type-safe reads and writes** — wrong key or wrong value type is a compile error
 - **Automatic type coercion** — values from the URL are parsed according to your TypeScript types (for example, `"25"` becomes `25` when the schema says `number`)
 - **Type-safe URL building** — `buildParams` builds a query string from a typed object and returns a `QueryString<T>`
+- **Compile-time string checking** — `queryString` validates a literal query string's keys and values
 - **Always in sync** — the schema is derived fresh from your TypeScript types on every compile
 - **Zero config** — no separate build step, no schemas to maintain
 
@@ -109,6 +110,21 @@ function productsUrl(): QueryString<ProductsUrlSchema> {
 }
 
 const url = `https://example.com/products?${productsUrl()}`;
+```
+
+### 7. Check a literal query string at compile time
+
+When you write a query string by hand, `queryString` validates its keys and values at compile time and returns it tagged as a `QueryString<T>`:
+
+```ts
+import { queryString, QueryString } from "@shmax-org/typeparams";
+
+function legacyUrl(): QueryString<ProductsUrlSchema> {
+  return queryString<ProductsUrlSchema>()("?limit=25&sort_dir=asc");
+}
+
+queryString<ProductsUrlSchema>()("?limit=banana");  // ❌ expected a number, got "banana"
+queryString<ProductsUrlSchema>()("?whammy=1");      // ❌ invalid query string key
 ```
 
 ---
