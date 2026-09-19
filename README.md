@@ -220,6 +220,9 @@ A: Nothing. Genuinely nothing. Go wild.
 **Q: Does this work with non-TypeScript projects?**  
 A: No — TypeParams needs TypeScript type information to do its thing. If you're not using TypeScript, you're also presumably fine with `parseInt` everywhere, and we wish you well.
 
+**Q: If everything is checked at compile time, why do I still need Zod?**  
+A: Compile-time checking only sees string *literals* you wrote — it can't inspect a runtime `string` like `location.search`, and it can't change a value's runtime type. Zod (via the injected schema) is what actually coerces `"25"` into `25`, turns `"true"` into `true`, and rejects malformed or unknown keys arriving from a real URL. Type checking protects your code; Zod protects you from the data.
+
 **Q: Can I use `typeParams` multiple times in the same file with different types?**  
 A: Yes. Each `typeParams<T>()(...)` call gets its own schema. Two calls, two schemas, zero drama.
 
