@@ -1,4 +1,8 @@
-import { TypeParams } from '../../src/type-params';
+import { typeParams } from '../../src/query-string';
+
+// type-params is checked against the Filters shape at compile time:
+// misspelling a key (e.g. "?yo_mama=3") is now a TypeScript error.
+// For dynamic strings use `new TypeParams<Filters>(someString)` instead.
 
 // Define the type for filters
 type Filters = {
@@ -11,7 +15,7 @@ type Filters = {
 };
 
 // Create an instance of TypeParams with a query string
-const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar&filters_foo2=3&filters_puppies=true");
+const params = typeParams<Filters>()("?filters_toyline=3&filters_tags=foo|bar&filters_foo2=3&filters_puppies=true");
 // Accessing individual parameters
 const toyline = params.get("filters.toyline");
 const puppies = params.get("filters.puppies");
