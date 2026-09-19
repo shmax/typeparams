@@ -153,7 +153,7 @@ navigate(`?${params}`);            // ?limit=25&p=1
 
 ## How it works
 
-The Babel plugin intercepts every `new TypeParams<YourSchema>(...)` call during compilation. It spins up the TypeScript compiler, walks the type of `YourSchema` (including any imported or cross-file types), generates a Zod validation schema, and splices it in as a second argument — all before the browser ever sees the code.
+The Babel plugin intercepts every `new TypeParams<YourSchema>(...)` and `typeParams<YourSchema>()(...)` call during compilation. It spins up the TypeScript compiler, walks the type of `YourSchema` (including any imported or cross-file types), generates a Zod validation schema, and splices it in as a second argument — all before the browser ever sees the code.
 
 ```ts
 // What you write:

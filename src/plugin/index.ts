@@ -107,6 +107,112 @@ type PluginState = {
     file: { opts: { filename: string } };
 };
 
+// ── Schema injection ─────────────────────────────────────────────────────────
+// Shared by the `new TypeParams<T>(...)` and `typeParams<T>()(...)` visitors:
+// locate the matching node in the TS AST, resolve its type argument through the
+// checker, generate a Zod schema, and inject it as the second argument.
+
+type Matcher = (node: ts.Node, sourceFile: ts.SourceFile) => ts.Node | undefined;
+
+function matchNewTypeParams(node: ts.Node, sourceFile: ts.SourceFile): ts.Node | undefined {
+    if (ts.isNewExpression(node) && node.expression.getText(sourceFile) === "TypeParams") {
+        return node.typeArguments?.[0];
+    }
+    return undefined;
+}
+
+function matchTypeParamsCall(node: ts.Node, sourceFile: ts.SourceFile): ts.Node | undefined {
+    if (
+        ts.isCallExpression(node) &&
+        ts.isCallExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        node.expression.expression.getText(sourceFile) === "typeParams"
+    ) {
+        return node.expression.typeArguments?.[0];
+    }
+    return undefined;
+}
+
+function injectSchema(
+    nodePath: NodePath<t.NewExpression | t.CallExpression>,
+    state: PluginState,
+    match: Matcher
+): void {
+    const filename = state.file.opts.filename.replace(/\\/g, "/");
+    const babelLoc = nodePath.node.loc?.start;
+    if (!babelLoc) return;
+
+    // ── Build / reuse the cached TS program ───────────────────────
+    let program: ts.Program;
+    try {
+        program = getProgram();
+    } catch (err) {
+        console.error("[TypeParams] Failed to build TS program:", err);
+        return;
+    }
+
+    const sourceFile = program.getSourceFile(filename);
+    if (!sourceFile) {
+        // File might be outside src/ — skip silently.
+        return;
+    }
+
+    const checker = program.getTypeChecker();
+
+    // ── Find the matching TypeParams call in the TS AST ───────────
+    // Babel line is 1-based; TS line is 0-based. Column (character)
+    // is 0-based in both. Because we're analysing the SAME source
+    // file at the SAME compilation moment, positions always match.
+    let schemaStr: string | null = null;
+
+    function visitTs(node: ts.Node) {
+        if (schemaStr !== null) return;
+        const typeArg = match(node, sourceFile!);
+        if (typeArg) {
+            const { line, character } =
+                sourceFile!.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+            if (line + 1 === babelLoc!.line && character === babelLoc!.column) {
+                const type = checker.getTypeAtLocation(typeArg);
+                schemaStr = generateZodSchema(type, checker, node);
+            }
+        }
+        ts.forEachChild(node, visitTs);
+    }
+
+    visitTs(sourceFile);
+
+    if (schemaStr === null) {
+        // No type argument — nothing to inject.
+        return;
+    }
+
+    // TypeScript can't narrow through the visitTs closure mutation,
+    // so we use an explicit cast here.
+    const resolvedSchema = schemaStr as string;
+
+    // ── Parse the schema string into a Babel AST node ─────────────
+    let schemaExpr: t.Expression;
+    try {
+        schemaExpr = babelParser.parseExpression(resolvedSchema, {
+            plugins: ["typescript"],
+        });
+    } catch (err) {
+        throw new Error(
+            `[TypeParams] Could not parse generated schema for ${filename}:` +
+            `${babelLoc.line}:${babelLoc.column}\n` +
+            `Schema string was: ${resolvedSchema}\n${err}`
+        );
+    }
+
+    // Inject the schema as the second argument
+    nodePath.node.arguments.push(schemaExpr);
+
+    state.needsZImport = true;
+    if (resolvedSchema.includes("pipeDelimitedArray")) {
+        state.needsPipeDelimitedArrayImport = true;
+    }
+}
+
 export default function typeparamsBabelPlugin() {
     return {
         pre(this: PluginState) {
@@ -142,84 +248,24 @@ export default function typeparamsBabelPlugin() {
                     return;
                 }
 
-                const filename = state.file.opts.filename.replace(/\\/g, "/");
-                const babelLoc = nodePath.node.loc?.start;
-                if (!babelLoc) return;
+                injectSchema(nodePath, state, matchNewTypeParams);
+            },
 
-                // ── Build / reuse the cached TS program ───────────────────────
-                let program: ts.Program;
-                try {
-                    program = getProgram();
-                } catch (err) {
-                    console.error("[TypeParams] Failed to build TS program:", err);
+            CallExpression(nodePath: NodePath<t.CallExpression>, state: PluginState) {
+                const callee = nodePath.node.callee;
+
+                // Match `typeParams<T>()(firstArg)` — an outer call whose callee
+                // is the inner `typeParams<T>()` call. Skip if already injected.
+                if (
+                    !t.isCallExpression(callee) ||
+                    !t.isIdentifier(callee.callee) ||
+                    callee.callee.name !== "typeParams" ||
+                    nodePath.node.arguments.length !== 1
+                ) {
                     return;
                 }
 
-                const sourceFile = program.getSourceFile(filename);
-                if (!sourceFile) {
-                    // File might be outside src/ — skip silently.
-                    return;
-                }
-
-                const checker = program.getTypeChecker();
-
-                // ── Find the matching TypeParams call in the TS AST ───────────
-                // Babel line is 1-based; TS line is 0-based. Column (character)
-                // is 0-based in both. Because we're analysing the SAME source
-                // file at the SAME compilation moment, positions always match.
-                let schemaStr: string | null = null;
-
-                function visitTs(node: ts.Node) {
-                    if (schemaStr !== null) return;
-                    if (
-                        ts.isNewExpression(node) &&
-                        node.expression.getText(sourceFile) === "TypeParams"
-                    ) {
-                        const { line, character } =
-                            sourceFile!.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-                        if (line + 1 === babelLoc!.line && character === babelLoc!.column) {
-                            const typeArg = node.typeArguments?.[0];
-                            if (typeArg) {
-                                const type = checker.getTypeAtLocation(typeArg);
-                                schemaStr = generateZodSchema(type, checker, node);
-                            }
-                        }
-                    }
-                    ts.forEachChild(node, visitTs);
-                }
-
-                visitTs(sourceFile);
-
-                if (schemaStr === null) {
-                    // No type argument — nothing to inject.
-                    return;
-                }
-
-                // TypeScript can't narrow through the visitTs closure mutation,
-                // so we use an explicit cast here.
-                const resolvedSchema = schemaStr as string;
-
-                // ── Parse the schema string into a Babel AST node ─────────────
-                let schemaExpr: t.Expression;
-                try {
-                    schemaExpr = babelParser.parseExpression(resolvedSchema, {
-                        plugins: ["typescript"],
-                    });
-                } catch (err) {
-                    throw new Error(
-                        `[TypeParams] Could not parse generated schema for ${filename}:` +
-                        `${babelLoc.line}:${babelLoc.column}\n` +
-                        `Schema string was: ${resolvedSchema}\n${err}`
-                    );
-                }
-
-                // Inject the schema as the second argument
-                nodePath.node.arguments.push(schemaExpr);
-
-                state.needsZImport = true;
-                if (resolvedSchema.includes("pipeDelimitedArray")) {
-                    state.needsPipeDelimitedArrayImport = true;
-                }
+                injectSchema(nodePath, state, matchTypeParamsCall);
             },
         },
     };
