@@ -1,4 +1,4 @@
-import { buildParams } from '../../src/query-string';
+import { buildParams, QueryString } from '../../src/query-string';
 import { TypeParams } from '../../src/type-params';
 
 // TypeParams isn't just for *parsing* incoming query strings — you can also use
@@ -18,8 +18,14 @@ type Filters = {
     };
 };
 
-// Build a query string from a typed object
-const qs = buildParams<Filters>({ filters: { toyline: 42, tags: ["foo", "bar"], puppies: true } });
+// `buildParams` returns a `QueryString<Filters>` — a string tagged as valid for
+// `Filters`. Use it as a return type to mark a function as producing a
+// type-safe query string.
+function buildProductsUrl(): QueryString<Filters> {
+    return buildParams<Filters>({ filters: { toyline: 42, tags: ["foo", "bar"], puppies: true } });
+}
+
+const qs = buildProductsUrl();
 console.log("built", qs);
 // "filters_toyline=42&filters_tags=foo%7Cbar&filters_puppies=true"
 

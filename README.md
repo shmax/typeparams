@@ -8,7 +8,7 @@ Under the hood, a Zod validation schema is generated from your TypeScript types 
 
 - **Type-safe reads and writes** — wrong key or wrong value type is a compile error
 - **Automatic type coercion** — values from the URL are parsed according to your TypeScript types (for example, `"25"` becomes `25` when the schema says `number`)
-- **Type-safe URL building** — `buildParams` builds a query string from a typed object
+- **Type-safe URL building** — `buildParams` builds a query string from a typed object and returns a `QueryString<T>`
 - **Always in sync** — the schema is derived fresh from your TypeScript types on every compile
 - **Zero config** — no separate build step, no schemas to maintain
 
@@ -99,13 +99,16 @@ navigate(`?${params}`);            // ?limit=25&p=1
 
 ### 6. Build a query string from a typed object
 
-`buildParams` builds a `_`-delimited query string from a typed object (handy for constructing URLs):
+`buildParams` builds a `_`-delimited query string from a typed object (handy for constructing URLs). It returns a `QueryString<T>` — a string tagged as valid for `T` — so you can use it as a return type:
 
 ```ts
-import { buildParams } from "@shmax-org/typeparams";
+import { buildParams, QueryString } from "@shmax-org/typeparams";
 
-const qs = buildParams<ProductsUrlSchema>({ limit: 25, filters: { tags: ["foo", "bar"] } });
-const url = `https://example.com/products?${qs}`;
+function productsUrl(): QueryString<ProductsUrlSchema> {
+  return buildParams<ProductsUrlSchema>({ limit: 25, filters: { tags: ["foo", "bar"] } });
+}
+
+const url = `https://example.com/products?${productsUrl()}`;
 ```
 
 ---
