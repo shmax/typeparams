@@ -1,8 +1,5 @@
-import { typeParams } from '../../src/query-string';
-
-// type-params is checked against the Filters shape at compile time:
-// misspelling a key (e.g. "?yo_mama=3") is now a TypeScript error.
-// For dynamic strings use `new TypeParams<Filters>(someString)` instead.
+import { TypeParams } from '../../src/type-params';
+import { toQueryString } from '../../src/query-string';
 
 // Define the type for filters
 type Filters = {
@@ -15,7 +12,7 @@ type Filters = {
 };
 
 // Create an instance of TypeParams with a query string
-const params = typeParams<Filters>()("?filters_toyline=3&filters_tags=foo|bar&filters_foo2=3&filters_puppies=true");
+const params = new TypeParams<Filters>("?filters_toyline=3&filters_tags=foo|bar&filters_foo2=3&filters_puppies=true");
 // Accessing individual parameters
 const toyline = params.get("filters.toyline");
 const puppies = params.get("filters.puppies");
@@ -33,6 +30,10 @@ console.log("url", url);
 // or with an object (note that this is equivalent to the line above in that will deep merge atop existing values by default, but you can pass false
 // to the second param if you want to wipe existing data)
 params.set({filters: {toyline: 6}});
+
+// Build a query string from a typed object (e.g. to construct a URL)
+const built = toQueryString<Filters>({ filters: { toyline: 42, tags: ["a", "b"] } });
+console.log("built", `?${built}`);
 
 // Create HTML output
 function createOutput() {

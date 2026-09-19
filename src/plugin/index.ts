@@ -108,9 +108,9 @@ type PluginState = {
 };
 
 // ── Schema injection ─────────────────────────────────────────────────────────
-// Shared by the `new TypeParams<T>(...)` and `typeParams<T>()(...)` visitors:
-// locate the matching node in the TS AST, resolve its type argument through the
-// checker, generate a Zod schema, and inject it as the second argument.
+// Locate the matching `new TypeParams<T>(...)` in the TS AST, resolve its type
+// argument through the checker, generate a Zod schema, and inject it as the
+// second argument.
 
 type Matcher = (node: ts.Node, sourceFile: ts.SourceFile) => ts.Node | undefined;
 
@@ -121,20 +121,8 @@ function matchNewTypeParams(node: ts.Node, sourceFile: ts.SourceFile): ts.Node |
     return undefined;
 }
 
-function matchTypeParamsCall(node: ts.Node, sourceFile: ts.SourceFile): ts.Node | undefined {
-    if (
-        ts.isCallExpression(node) &&
-        ts.isCallExpression(node.expression) &&
-        ts.isIdentifier(node.expression.expression) &&
-        node.expression.expression.getText(sourceFile) === "typeParams"
-    ) {
-        return node.expression.typeArguments?.[0];
-    }
-    return undefined;
-}
-
 function injectSchema(
-    nodePath: NodePath<t.NewExpression | t.CallExpression>,
+    nodePath: NodePath<t.NewExpression>,
     state: PluginState,
     match: Matcher
 ): void {
@@ -249,23 +237,6 @@ export default function typeparamsBabelPlugin() {
                 }
 
                 injectSchema(nodePath, state, matchNewTypeParams);
-            },
-
-            CallExpression(nodePath: NodePath<t.CallExpression>, state: PluginState) {
-                const callee = nodePath.node.callee;
-
-                // Match `typeParams<T>()(firstArg)` — an outer call whose callee
-                // is the inner `typeParams<T>()` call. Skip if already injected.
-                if (
-                    !t.isCallExpression(callee) ||
-                    !t.isIdentifier(callee.callee) ||
-                    callee.callee.name !== "typeParams" ||
-                    nodePath.node.arguments.length !== 1
-                ) {
-                    return;
-                }
-
-                injectSchema(nodePath, state, matchTypeParamsCall);
             },
         },
     };
