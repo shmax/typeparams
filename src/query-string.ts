@@ -2,26 +2,12 @@ import { serialize } from "./utils";
 
 /**
  * A `string` tagged as a valid query string for schema `T`. Produced by
- * `buildParams` and `queryString`, so anything carrying this type is guaranteed
- * (at the type level) to have been built or checked against `T`. Use it as a
- * return type to mark a function as returning a type-safe query string.
+ * `queryString` (from either a typed object or a validated literal), so anything
+ * carrying this type is guaranteed (at the type level) to have been built or
+ * checked against `T`. Use it as a return type to mark a function as returning a
+ * type-safe query string.
  */
 export type QueryString<T extends object> = string & { readonly __typeParams: T };
-
-/**
- * Builds a `_`-delimited query string from a typed object (the inverse of
- * `TypeParams`'s string/object parsing). No leading `?` is added, matching
- * `TypeParams#toString`.
- *
- * ```ts
- * function url(): QueryString<Filters> {
- *     return buildParams<Filters>({ filters: { toyline: 3, tags: ["foo"] } });
- * }
- * ```
- */
-export function buildParams<T extends object>(params: T): QueryString<T> {
-    return serialize(params) as QueryString<T>;
-}
 
 // ── Compile-time literal checking ─────────────────────────────────────────────
 // The type-level machinery behind `queryString`, which validates the keys and
@@ -102,22 +88,38 @@ export type ValidateQueryString<T extends object, S extends string> =
     [QueryStringErrors<T, S>] extends [never] ? S : QueryStringErrors<T, S>;
 
 /**
- * Checks a literal query string against `T` at compile time and returns it
- * tagged as a `QueryString<T>`. Both keys and values are validated:
+ * Builds or checks a query string against `T`, returning it tagged as a
+ * `QueryString<T>`.
  *
- * ```ts
- * queryString<Filters>()("?filters_toyline=3");          // ✅
- * queryString<Filters>()("?filters_toyline=banana");     // ❌ value error
- * queryString<Filters>()("?yo_mama=3");                  // ❌ key error
- * ```
+ * - Pass a typed object to serialize it into a `_`-delimited query string (the
+ *   inverse of `TypeParams`'s parsing):
+ *
+ *   ```ts
+ *   queryString<Filters>()({ filters: { toyline: 3, tags: ["foo"] } });
+ *   // "filters_toyline=3&filters_tags=foo|bar"
+ *   ```
+ *
+ * - Pass a literal string to validate its keys and values at compile time:
+ *
+ *   ```ts
+ *   queryString<Filters>()("?filters_toyline=3");          // ✅
+ *   queryString<Filters>()("?filters_toyline=banana");     // ❌ value error
+ *   queryString<Filters>()("?yo_mama=3");                  // ❌ key error
+ *   ```
  *
  * Because TypeScript can't infer a second type argument once `T` is supplied,
- * the generic is split across two calls: `queryString<Filters>()("...")`.
+ * the generic is split across two calls: `queryString<Filters>()(...)`.
  */
 export function queryString<T extends object>() {
-    return function validate<S extends string>(
+    function queryString<S extends string>(
         qs: S extends string ? ValidateQueryString<T, S> : never
-    ): QueryString<T> {
-        return qs as QueryString<T>;
-    };
+    ): QueryString<T>;
+    function queryString(params: T): QueryString<T>;
+    function queryString(qsOrParams: string | T): QueryString<T> {
+        if (typeof qsOrParams === "string") {
+            return qsOrParams as QueryString<T>;
+        }
+        return serialize(qsOrParams) as QueryString<T>;
+    }
+    return queryString;
 }

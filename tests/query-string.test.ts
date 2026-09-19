@@ -1,4 +1,4 @@
-import { buildParams, queryString, QueryString } from "../src";
+import { queryString, QueryString } from "../src";
 
 interface ValueShape {
     count?: number;
@@ -7,14 +7,14 @@ interface ValueShape {
     mode?: "asc" | "desc";
 }
 
-describe("buildParams", () => {
+describe("queryString", () => {
     it("should serialize a typed object to a query string", () => {
-        const qs = buildParams<ValueShape>({ count: 3, enabled: true, numbers: [1, 2], mode: "asc" });
+        const qs = queryString<ValueShape>()({ count: 3, enabled: true, numbers: [1, 2], mode: "asc" });
         expect(qs).toBe("count=3&enabled=true&numbers=1%7C2&mode=asc");
     });
 
     it("should return a QueryString<T> that is still a string", () => {
-        const qs = buildParams<ValueShape>({ count: 3 });
+        const qs = queryString<ValueShape>()({ count: 3 });
 
         // A QueryString<T> is assignable to string...
         const asString: string = qs;
@@ -24,9 +24,7 @@ describe("buildParams", () => {
         // @ts-expect-error - a raw string has not been built from a ValueShape
         const forged: QueryString<ValueShape> = "count=3";
     });
-});
 
-describe("queryString", () => {
     it("should validate a literal and return it tagged as QueryString<T>", () => {
         const qs: QueryString<ValueShape> = queryString<ValueShape>()("?count=3&enabled=true");
 

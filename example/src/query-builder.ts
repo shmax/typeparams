@@ -1,12 +1,12 @@
-import { buildParams, queryString, QueryString } from '../../src/query-string';
+import { queryString, QueryString } from '../../src/query-string';
 import { TypeParams } from '../../src/type-params';
 
 // TypeParams isn't just for *parsing* incoming query strings — you can also use
 // it to *build* type-safe URLs, whether that's on the front end (generating a
 // link to navigate to) or the back end (assembling a URL to hand to an API or
 // an email). Define your schema once, then build or check query strings with
-// `buildParams` and `queryString`, and the compiler keeps every key and value
-// honest in both directions.
+// `queryString`, and the compiler keeps every key and value honest in both
+// directions.
 
 // Define the type for filters
 type Filters = {
@@ -19,11 +19,11 @@ type Filters = {
 };
 
 // ── Build: serialize a typed object into a query string ──────────────────────
-// `buildParams` returns a `QueryString<Filters>` — a string tagged as valid for
+// `queryString` returns a `QueryString<Filters>` — a string tagged as valid for
 // `Filters`. Use it as a return type to mark a function as producing a
 // type-safe query string.
 function buildProductsUrl(): QueryString<Filters> {
-    return buildParams<Filters>({ filters: { toyline: 42, tags: ["foo", "bar"], puppies: true } });
+    return queryString<Filters>()({ filters: { toyline: 42, tags: ["foo", "bar"], puppies: true } });
 }
 
 const qs = buildProductsUrl();
