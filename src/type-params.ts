@@ -28,6 +28,11 @@ type PathValue<Obj, Path extends string> = Path extends `${infer Key}.${infer Re
 export class TypeParams<T extends object> {
   private params: T = {} as T;
 
+  /**
+   * @deprecated Use the `typeParams<T>()` factory instead — it type-checks
+   * literal query strings at compile time. This constructor remains as the
+   * underlying engine.
+   */
   constructor(
       searchParams: T | string | FlatSearchParams, // Accept a typed object, a query string, or a flat parsed object
       schema?: ZodSchema<unknown>
