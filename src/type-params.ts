@@ -29,9 +29,9 @@ export class TypeParams<T extends object> {
   private params: T = {} as T;
 
   /**
-   * @deprecated Use the `typeParams<T>()` factory instead — it type-checks
-   * literal query strings at compile time. This constructor remains as the
-   * underlying engine.
+   * Creates a `TypeParams` from a runtime value — a query string, a flat parsed
+   * object, or a typed object. For a literal query string, prefer the
+   * `typeParams<T>()` factory, which also type-checks it at compile time.
    */
   constructor(
       searchParams: T | string | FlatSearchParams, // Accept a typed object, a query string, or a flat parsed object

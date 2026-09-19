@@ -114,21 +114,25 @@ interface ProductsUrlSchema {
 
 Types can reference other interfaces, imported types, and cross-file definitions — the TypeScript compiler resolves them all.
 
-### 2. Pass it to `typeParams`
+### 2. Wrap your params
+
+For a runtime string, `new TypeParams` is a drop-in for `URLSearchParams`:
 
 ```ts
-import { typeParams } from "@shmax-org/typeparams";
+import { TypeParams } from "@shmax-org/typeparams";
 
-const params = typeParams<ProductsUrlSchema>()(location.search);
+const params = new TypeParams<ProductsUrlSchema>(location.search);
 ```
 
-`typeParams` also accepts an already-parsed query object — the shape Next.js App Router's `searchParams` and WHATWG `URLSearchParams` produce (each value a `string`, `string[]`, or `undefined`):
+It also accepts an already-parsed query object — the shape Next.js App Router's `searchParams` and WHATWG `URLSearchParams` produce (each value a `string`, `string[]`, or `undefined`):
 
 ```ts
-const params = typeParams<ProductsUrlSchema>()(searchParams);
+const params = new TypeParams<ProductsUrlSchema>(searchParams);
 ```
 
 Flat `_`-delimited keys from a parsed object are nested and coerced exactly like the string form, so `filters_toyline=355` becomes `{ filters: { toyline: 355 } }`.
+
+For a *literal* query string you write yourself, use the `typeParams` factory instead — it checks every key and value at compile time (see [Compile-time query string checking](#compile-time-query-string-checking)).
 
 ### 3. Values are automatically coerced to their declared types
 
@@ -159,14 +163,14 @@ navigate(`?${params}`);            // ?limit=25&p=1
 
 ## How it works
 
-The Babel plugin intercepts every `typeParams<YourSchema>()(...)` and `new TypeParams<YourSchema>(...)` call during compilation. It spins up the TypeScript compiler, walks the type of `YourSchema` (including any imported or cross-file types), generates a Zod validation schema, and splices it in as a second argument — all before the browser ever sees the code.
+The Babel plugin intercepts every `new TypeParams<YourSchema>(...)` and `typeParams<YourSchema>()(...)` call during compilation. It spins up the TypeScript compiler, walks the type of `YourSchema` (including any imported or cross-file types), generates a Zod validation schema, and splices it in as a second argument — all before the browser ever sees the code.
 
 ```ts
 // What you write:
-const params = typeParams<{ limit?: number; p?: number; sort?: string }>()(location.search);
+const params = new TypeParams<{ limit?: number; p?: number; sort?: string }>(location.search);
 
 // What gets bundled:
-const params = typeParams<{ limit?: number; p?: number; sort?: string }>()(location.search, z.object({
+const params = new TypeParams(location.search, z.object({
   limit: z.coerce.number().optional(),
   p: z.coerce.number().optional(),
   sort: z.string().optional(),
