@@ -1,33 +1,19 @@
 # TypeParams
 
-TypeParams is a TypeScript-first replacement for `URLSearchParams` that brings type discipline to query parameters — safe reads, safe writes, and automatic type coercion (no more `parseInt`). It works by embedding a Zod validation schema directly into your compiled code at build time, derived entirely from the TypeScript interface you already wrote.
+TypeParams is a TypeScript-first replacement for `URLSearchParams` that brings type discipline to query parameters — safe reads, safe writes, and automatic type coercion (no more `parseInt`). It does this two ways:
+
+- **At compile time**, literal query strings are checked against your schema — wrong keys and wrong values are red squiggles before anything runs.
+- **At build time**, a Zod validation schema is generated from your types and embedded into the compiled code, so values from a live URL are coerced to their declared types automatically.
+
+Either way, the TypeScript interface you already wrote is the single source of truth.
 
 ## Features
 
-- **Automatic type coercion** — values from the URL are parsed according to your TypeScript types (for example, `"25"` becomes `25` when the schema says `number`)
 - **Type-safe reads and writes** — wrong key or wrong value type is a compile error
+- **Compile-time string checking** — literal query strings are validated against your schema, keys *and* values, before anything runs
+- **Automatic type coercion** — values from the URL are parsed according to your TypeScript types (for example, `"25"` becomes `25` when the schema says `number`)
 - **Always in sync** — the schema is derived fresh from your TypeScript types on every compile
 - **Zero config** — no separate build step, no schemas to maintain
-
----
-
-## How it works
-
-The Babel plugin intercepts every `new TypeParams<YourSchema>(...)` call during compilation. It spins up the TypeScript compiler, walks the type of `YourSchema` (including any imported or cross-file types), generates a Zod validation schema, and splices it in as a second argument — all before the browser ever sees the code.
-
-```ts
-// What you write:
-const params = new TypeParams<{ limit?: number; p?: number; sort?: string }>(location.search);
-
-// What gets bundled:
-const params = new TypeParams(location.search, z.object({
-  limit: z.coerce.number().optional(),
-  p: z.coerce.number().optional(),
-  sort: z.string().optional(),
-}));
-```
-
-The TypeScript generic is erased as normal. The schema is embedded directly into the compiled output.
 
 ---
 
@@ -37,7 +23,7 @@ The TypeScript generic is erased as normal. The schema is embedded directly into
 yarn add @shmax-org/typeparams
 ```
 
-Add the Babel plugin to your config (`.babelrc`, `babel.config.js`, or the Babel section of your bundler config):
+For automatic runtime coercion, add the Babel plugin to your config (`.babelrc`, `babel.config.js`, or the Babel section of your bundler config):
 
 ```json
 {
@@ -46,7 +32,51 @@ Add the Babel plugin to your config (`.babelrc`, `babel.config.js`, or the Babel
 }
 ```
 
-That's it. No other setup required.
+The Babel plugin only powers runtime coercion. Compile-time string checking (below) works with plain TypeScript — no plugin required.
+
+---
+
+## Compile-time query string checking
+
+When your query string is a literal, the `typeParams` factory checks it against your schema — **both the keys and the values**. Only a valid sequence compiles; everything else is a red squiggle before it ever runs.
+
+```ts
+import { typeParams } from "@shmax-org/typeparams";
+
+type Filters = {
+  filters: {
+    toyline: number;
+    tags?: string[];
+    puppies?: boolean;
+  };
+};
+
+const params = typeParams<Filters>()(
+  "?filters_toyline=3&filters_tags=foo|bar&filters_puppies=true"
+);
+
+// Reading, writing, and serializing work exactly like TypeParams
+params.get("filters.toyline");            // number
+params.get("filters.tags");               // string[] | undefined
+params.set("filters.toyline", 1257);
+params.set({ filters: { toyline: 6 } });  // deep-merges by default
+
+const url = `?${params}`;                 // ?filters_toyline=6&...
+```
+
+An invalid sequence is rejected at compile time, with the offending key or value spelled out:
+
+```ts
+typeParams<Filters>()("?filters_typo=3");          // ❌ 'Invalid query string key: "filters_typo"'
+typeParams<Filters>()("?filters_toyline=foo");     // ❌ '"filters_toyline": expected a number, got "foo"'
+typeParams<Filters>()("?filters_puppies=banana");  // ❌ '"filters_puppies": expected "true" or "false", got "banana"'
+```
+
+`typeParams` returns a normal `TypeParams<T>`; pass a Zod schema as the second argument for runtime coercion, just like `new TypeParams`.
+
+**Why the double call?** TypeScript can't infer a second type argument once you supply `T` explicitly, so the generic is split across two calls: `typeParams<Filters>()("...")`.
+
+For strings that aren't known until runtime, use the class directly — `new TypeParams<T>(someString)` skips the compile-time check, and the embedded Zod schema still validates at runtime.
 
 ---
 
@@ -114,6 +144,26 @@ navigate(`?${params}`);            // ?limit=25&p=1
 
 ---
 
+## How it works
+
+The Babel plugin intercepts every `new TypeParams<YourSchema>(...)` call during compilation. It spins up the TypeScript compiler, walks the type of `YourSchema` (including any imported or cross-file types), generates a Zod validation schema, and splices it in as a second argument — all before the browser ever sees the code.
+
+```ts
+// What you write:
+const params = new TypeParams<{ limit?: number; p?: number; sort?: string }>(location.search);
+
+// What gets bundled:
+const params = new TypeParams(location.search, z.object({
+  limit: z.coerce.number().optional(),
+  p: z.coerce.number().optional(),
+  sort: z.string().optional(),
+}));
+```
+
+The TypeScript generic is erased as normal. The schema is embedded directly into the compiled output.
+
+---
+
 ## Array fields
 
 Arrays are serialized as pipe-delimited strings in the URL:
@@ -134,8 +184,8 @@ Supported element types: `string[]` and `number[]`.
 ## Requirements
 
 - Node.js 14+
-- TypeScript 4.0+
-- Babel (with `@babel/preset-typescript`)
+- TypeScript 4.1+
+- Babel (with `@babel/preset-typescript`) — for the automatic coercion plugin
 
 ---
 
