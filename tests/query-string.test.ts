@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { pipeDelimitedArray } from "../src/pipe-delimited-array";
-import { typeParams, TypeParams } from "../src";
+import { queryString, typeParams, TypeParams } from "../src";
 
 interface Shape {
     filters?: {
@@ -71,5 +71,21 @@ describe("typeParams", () => {
 
     it("should accept valid values at compile time", () => {
         typeParams<ValueShape>()("?count=-3.5&enabled=false&numbers=1|2|-4&mode=desc");
+    });
+
+    it("should accept dynamic strings without a cast", () => {
+        const dynamic: string = "?limit=25&sort_dir=asc&sort_type=name";
+        const params = typeParams<Shape>()(dynamic, schema);
+
+        expect(params.get("limit")).toBe(25);
+        expect(params.get("sort")).toEqual({ dir: "asc", type: "name" });
+    });
+
+    it("should validate a literal and return it unchanged", () => {
+        const url = queryString<ValueShape>()("?count=3&enabled=true");
+        expect(url).toBe("?count=3&enabled=true");
+
+        // @ts-expect-error - "banana" is not a valid number for `count`
+        queryString<ValueShape>()("?count=banana");
     });
 });

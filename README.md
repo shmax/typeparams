@@ -74,9 +74,16 @@ typeParams<Filters>()("?filters_puppies=banana");  // ❌ '"filters_puppies": ex
 
 `typeParams` returns a normal `TypeParams<T>`; pass a Zod schema as the second argument for runtime coercion, just like `new TypeParams`.
 
+If you only need the validated string (not a `TypeParams` instance), use `queryString` — it returns the literal unchanged with zero runtime cost:
+
+```ts
+const url = queryString<Filters>()("?filters_toyline=3&filters_puppies=true"); // ✅ string
+queryString<Filters>()("?filters_toyline=foo");                                // ❌ value error
+```
+
 **Why the double call?** TypeScript can't infer a second type argument once you supply `T` explicitly, so the generic is split across two calls: `typeParams<Filters>()("...")`.
 
-For strings that aren't known until runtime, use the class directly — `new TypeParams<T>(someString)` skips the compile-time check, and the embedded Zod schema still validates at runtime.
+Strings that aren't known until runtime (a plain `string` like `location.search`) pass through unchecked — the embedded Zod schema still validates them at runtime. (`new TypeParams<T>(str)` remains the low-level escape hatch.)
 
 ---
 

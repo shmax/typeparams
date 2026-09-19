@@ -85,9 +85,15 @@ export type QueryStringErrors<T extends object, S extends string> =
 /**
  * `S` when the literal query string is valid for `T`, otherwise a descriptive
  * string naming the offending keys/values (surfaced as a compile error).
+ *
+ * A plain `string` (whose contents aren't known at compile time, e.g.
+ * `location.search`) short-circuits to `string` — it can't be validated, so it
+ * is passed through unchecked.
  */
 export type ValidateQueryString<T extends object, S extends string> =
-  [QueryStringErrors<T, S>] extends [never] ? S : QueryStringErrors<T, S>;
+  string extends S
+    ? string
+    : [QueryStringErrors<T, S>] extends [never] ? S : QueryStringErrors<T, S>;
 
 /**
  * Type-checks a literal query string against the shape `T` at compile time.
@@ -101,8 +107,11 @@ export type ValidateQueryString<T extends object, S extends string> =
  * ```
  *
  * Both keys and values are validated: `?yo_mama=3` and `?filters_toyline=banana`
- * are compile-time errors. For dynamic strings (whose contents are not known
- * statically) use `new TypeParams<T>(str)`.
+ * are compile-time errors.
+ *
+ * Values whose contents aren't known until runtime (a plain `string` such as
+ * `location.search`) are passed through unchecked and validated by the schema
+ * at runtime instead.
  */
 export function typeParams<T extends object>() {
   return function parse<S extends string>(
@@ -110,5 +119,22 @@ export function typeParams<T extends object>() {
       schema?: ZodSchema<unknown>
   ): TypeParams<T> {
     return new TypeParams<T>(queryString, schema);
+  };
+}
+
+/**
+ * Validates a literal query string against `T` at compile time and returns it
+ * unchanged. A zero-runtime-cost alternative to `typeParams` when you only need
+ * the string itself, not a `TypeParams` instance.
+ *
+ * ```ts
+ * const url = queryString<Filters>()("?filters_toyline=3&filters_puppies=true");
+ * ```
+ */
+export function queryString<T extends object>() {
+  return function validate<S extends string>(
+      qs: S extends string ? ValidateQueryString<T, S> : never
+  ): S {
+    return qs;
   };
 }
