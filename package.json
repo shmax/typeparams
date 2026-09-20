@@ -1,6 +1,6 @@
 {
   "name": "@shmax-org/typeparams",
-  "version": "1.0.1-rc.34",
+  "version": "1.0.1-rc.35",
   "description": "Type-safe query string management and Zod schema generation.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,7 +14,8 @@
   "scripts": {
     "test": "jest",
     "lint": "eslint src",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@babel/core": "^7.26.0",
